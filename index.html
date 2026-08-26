@@ -463,6 +463,7 @@
           <thead>
             <tr>
               <th data-key="name" style="text-align:left;">Group <span class="arrow"></span></th>
+              <th class="spark-col">7D</th>
               <th class="spark-col">30D</th>
               <th data-key="today">Today <span class="arrow"></span></th>
               <th data-key="w1">1W <span class="arrow"></span></th>
@@ -473,7 +474,7 @@
             </tr>
           </thead>
           <tbody id="tbody">
-            <tr><td colspan="8">
+            <tr><td colspan="9">
               <div class="loading-state">
                 <div class="pulse-dot" style="position:static;"></div>
                 Loading market data from Alpaca...
@@ -906,6 +907,12 @@ ${payloadStr}`;
 
 // Fetching Data
 function fmtDate(d){ return d.toISOString().slice(0,10); }
+function fmtShortDate(isoStr){
+  if(!isoStr) return '';
+  const d = new Date(isoStr + 'T00:00:00');
+  if(isNaN(d.getTime())) return isoStr;
+  return d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+}
 
 async function fetchChunk(symbols, start, end, creds, timeframe='1Day'){
   const url = `https://data.alpaca.markets/v2/stocks/bars?symbols=${symbols.join(',')}&timeframe=${timeframe}&start=${start}&end=${end}&limit=10000&adjustment=split&feed=${creds.feed}`;
@@ -1066,13 +1073,23 @@ function avg(arr){
 }
 
 function detectBullishTurn(series, shortP=8, longP=21, lookback=4){
-  if(!series || series.length < longP + lookback + 2) return false;
+  const none = { isBullish:false, crossIdx:null };
+  if(!series || series.length < longP + lookback + 2) return none;
   const s = ema(series, shortP), l = ema(series, longP), n = series.length;
-  if(s[n-1] <= l[n-1]) return false;
+  if(s[n-1] <= l[n-1]) return none;
+  // Only counts as a "turn" if the short EMA crossed above the long EMA within the lookback window
+  // (i.e. it was still below/equal at some point in the last `lookback` bars) — otherwise it's an
+  // established uptrend rather than a fresh turn.
+  let recentCross = false;
   for(let i=n-2; i>=Math.max(0, n-1-lookback); i--){
-    if(s[i] <= l[i]) return true;
+    if(s[i] <= l[i]){ recentCross = true; break; }
   }
-  return false;
+  if(!recentCross) return none;
+  // Walk back from today while the short EMA has stayed above the long EMA to find the actual
+  // crossover bar — the first day of the current bullish streak, i.e. when the turn started.
+  let crossIdx = n-1;
+  while(crossIdx > 0 && s[crossIdx-1] > l[crossIdx-1]) crossIdx--;
+  return { isBullish:true, crossIdx };
 }
 
 function checkStock2CandleTurn(bars, breakoutLookback=10){
@@ -1157,15 +1174,26 @@ function computeAvgDollarVol(bars, window=30){
   return recent.length ? total / recent.length : null;
 }
 
-function buildGroupIndex(tickerCloses, N){
-  const series = tickerCloses.filter(c => c && c.length >= 2).map(c => N ? c.slice(-N) : c);
-  if(!series.length) return [];
-  const minLen = Math.min(...series.map(s=>s.length));
-  const trimmed = series.map(s => s.slice(s.length - minLen));
+function buildGroupIndex(tickerCloses, N, tickerDates=null){
+  const items = [];
+  for(let i=0;i<tickerCloses.length;i++){
+    const c = tickerCloses[i];
+    if(!c || c.length < 2) continue;
+    const d = tickerDates && tickerDates[i] ? tickerDates[i] : null;
+    items.push({ c: N ? c.slice(-N) : c, d: N && d ? d.slice(-N) : d });
+  }
+  if(!items.length) return { series: [], dates: [] };
+  const minLen = Math.min(...items.map(it=>it.c.length));
+  const trimmed = items.map(it => it.c.slice(it.c.length - minLen));
   const idx = trimmed.map(s => s.map(v => v / s[0] * 100));
   const out = [];
   for(let i=0;i<minLen;i++) out.push(avg(idx.map(s=>s[i])));
-  return out;
+  // Dates are only meaningful for the caller that passes tickerDates (the full-history spark used
+  // for sector turn detection) — take them from whichever series has a full-length date array.
+  let dates = [];
+  const withDates = items.find(it => it.d && it.d.length >= minLen);
+  if(withDates) dates = withDates.d.slice(withDates.d.length - minLen);
+  return { series: out, dates };
 }
 
 function computeAll(){
@@ -1184,6 +1212,9 @@ function computeAll(){
       // Last 30 closes + matching EMA34 slice for the per-stock sparkline in Table View sub-rows.
       symReturns[sym].sparkCloses = symReturns[sym].closes.slice(-30);
       symReturns[sym].sparkEma = ind.ema34.slice(-30);
+      // Same, but last 7 closes for the 7D sparkline.
+      symReturns[sym].sparkCloses7 = symReturns[sym].closes.slice(-7);
+      symReturns[sym].sparkEma7 = ind.ema34.slice(-7);
     }
   }
   // Relative strength vs SPY, computed once per stock so the swing score can gate/reward it.
@@ -1204,15 +1235,23 @@ function computeAll(){
     const tickers = {};
     validSyms.forEach(s => tickers[s] = symReturns[s]);
     const closesArrs = validSyms.map(s => symReturns[s].closes);
-    const spark = buildGroupIndex(closesArrs, 30);
-    const fullSpark = buildGroupIndex(closesArrs, null);
-    // EMA34 computed on the same self-normalized 30D series as the price line, so both share
+    const datesArrs = validSyms.map(s => symReturns[s].dates);
+    const { series: spark } = buildGroupIndex(closesArrs, 30);
+    const { series: spark7 } = buildGroupIndex(closesArrs, 7);
+    const { series: fullSpark, dates: fullSparkDates } = buildGroupIndex(closesArrs, null, datesArrs);
+    // EMA34 computed on the same self-normalized 30D/7D series as the price line, so both share
     // one scale and actually overlay correctly (mixing in the full-history basis would not).
     const sparkEma = spark.length >= 2 ? ema(spark, 34) : null;
+    const sparkEma7 = spark7.length >= 2 ? ema(spark7, 34) : null;
 
     const w1Avg = avg(validSyms.map(s=>symReturns[s].w1));
     const m1Avg = avg(validSyms.map(s=>symReturns[s].m1));
-    const isBullishSector = detectBullishTurn(fullSpark) || (w1Avg != null && w1Avg > 1 && m1Avg != null && m1Avg > 0);
+    const bullishTurn = detectBullishTurn(fullSpark);
+    const isBullishSector = bullishTurn.isBullish || (w1Avg != null && w1Avg > 1 && m1Avg != null && m1Avg > 0);
+    // Only the EMA-crossover path has a real "turn day" — the momentum-average fallback describes
+    // an ongoing state, not a dated event, so it gets no turn date.
+    const turnDate = (bullishTurn.isBullish && bullishTurn.crossIdx != null && fullSparkDates[bullishTurn.crossIdx])
+      ? fullSparkDates[bullishTurn.crossIdx] : null;
 
     validSyms.forEach(s => { symReturns[s].swingScore = computeSwingScore(symReturns[s], isBullishSector); });
 
@@ -1227,8 +1266,11 @@ function computeAll(){
       swingScore: avg(validSyms.map(s=>symReturns[s].swingScore)),
       spark,
       sparkEma,
+      spark7,
+      sparkEma7,
       fullSpark,
       turningBullish: isBullishSector,
+      turnDate,
       tickers
     };
   }
@@ -1488,7 +1530,9 @@ function getAllStockList(){
         overExtended: r.pctFromEma34 != null && r.pctFromEma34 >= 12,
         illiquid: (r.lastPrice != null && r.lastPrice < MIN_PRICE) || (r.avgDollarVol != null && r.avgDollarVol < MIN_AVG_DOLLAR_VOL),
         atrStop: r.atrStop,
-        atrStopPct: r.atrStopPct
+        atrStopPct: r.atrStopPct,
+        sectorBullish: d.turningBullish,
+        sectorTurnDate: d.turnDate
       });
     }
   }
@@ -1723,7 +1767,7 @@ function renderTable(){
 
   if(!entries.length){
     destroyLiveCharts();
-    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state">No matching results found for this scan.</div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state">No matching results found for this scan.</div></td></tr>`;
     return;
   }
 
@@ -1733,10 +1777,11 @@ function renderTable(){
     const leader = sectorLeader(d.tickers, sortKey);
     const hitsCount = Object.values(d.tickers).filter(t => t.turnHit).length;
 
-    const badges = `${d.turningBullish ? '<span class="badge bullish">▲ Bullish Sector</span>' : ''} ${hitsCount > 0 ? `<span class="badge turn-hit">★ ${hitsCount} Turn Hit${hitsCount>1?'s':''}</span>` : ''}${leader ? `<span class="badge leader">Leader: ${leader.sym} ${leader.val>0?'+':''}${leader.val.toFixed(1)}%</span>` : ''}`;
+    const badges = `${d.turningBullish ? `<span class="badge bullish" title="${d.turnDate ? 'Short EMA crossed above long EMA on '+d.turnDate : 'Sector momentum turned bullish'}">▲ Bullish Sector${d.turnDate ? ' · since '+fmtShortDate(d.turnDate) : ''}</span>` : ''} ${hitsCount > 0 ? `<span class="badge turn-hit">★ ${hitsCount} Turn Hit${hitsCount>1?'s':''}</span>` : ''}${leader ? `<span class="badge leader">Leader: ${leader.sym} ${leader.val>0?'+':''}${leader.val.toFixed(1)}%</span>` : ''}`;
     
     html += `<tr class="group-row${isOpen?' expanded':''}" data-group="${name}">
       <td><div class="group-name"><span class="chev">▸</span><span class="gname-text">${name}</span></div><div class="badges">${badges}</div></td>
+      <td>${sparkSvg(d.spark7, d.sparkEma7)}</td>
       <td>${sparkSvg(d.spark, d.sparkEma)}</td>
       <td>${pctSpan(d.today)}</td>
       <td>${pctSpan(d.w1)}</td>
@@ -1762,7 +1807,7 @@ function renderTable(){
         dailyBars: barsBySymbol[activeSym]
       };
 
-      const chartPanelHtml = `<tr class="chart-row"><td colspan="8">
+      const chartPanelHtml = `<tr class="chart-row"><td colspan="9">
         <div class="chart-panel">
           <div class="chart-panel-head">
             <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
@@ -1805,6 +1850,7 @@ function renderTable(){
               </span>
             </div>
           </td>
+          <td>${sparkSvg(r.sparkCloses7, r.sparkEma7)}</td>
           <td>${sparkSvg(r.sparkCloses, r.sparkEma)}</td>
           <td>${pctSpan(r.today)}</td>
           <td>${pctSpan(r.w1)}</td>
@@ -1924,7 +1970,7 @@ function renderBullishScanner(){
           <span class="chev">▸</span>
           <button class="cart-btn ${inCart ? 'active' : ''}" data-cart-sym="${item.sym}">${inCart ? '★' : '☆'}</button>
           <span class="sym" style="font-weight:700; color:var(--text); font-family:'JetBrains Mono',monospace;">${item.sym}</span>
-          <span style="color:var(--muted); font-size:11px;">(${item.sector})</span>
+          <span style="color:var(--muted); font-size:11px;">(${item.sector}${item.sectorBullish && item.sectorTurnDate ? ' · bullish since '+fmtShortDate(item.sectorTurnDate) : ''})</span>
           ${idx < 5 ? `<span class="badge rank">#${idx+1}</span>` : ''}
           ${item.turnHit ? '<span class="badge turn-hit">★ Turn Hit</span>' : ''}
         </div>
@@ -2041,7 +2087,7 @@ function renderHeatMap(){
 
     html += `<div class="hm-card">
       <div class="hm-head">
-        <div class="hm-title">${name} ${d.turningBullish ? '<span class="badge bullish">Bullish</span>' : ''} <span style="color:var(--muted); font-weight:400; font-size:10px;">top ${sortedTickers.length} of ${Object.keys(d.tickers).length}</span></div>
+        <div class="hm-title">${name} ${d.turningBullish ? `<span class="badge bullish" title="${d.turnDate ? 'Short EMA crossed above long EMA on '+d.turnDate : 'Sector momentum turned bullish'}">Bullish${d.turnDate ? ' · '+fmtShortDate(d.turnDate) : ''}</span>` : ''} <span style="color:var(--muted); font-weight:400; font-size:10px;">top ${sortedTickers.length} of ${Object.keys(d.tickers).length}</span></div>
         <div>${hmMetric === 'swingScore' ? `<span class="mono" style="font-weight:700;">${Math.round(d.swingScore||0)}</span>` : pctSpan(d[hmMetric])}</div>
       </div>
       <div class="hm-tiles">${tiles}</div>
@@ -2429,7 +2475,7 @@ async function loadAll(forceRefresh=false){
     else if(activeView === 'nearema') renderNearEmaGrid();
     else renderHeatMap();
   }catch(err){
-    document.getElementById('tbody').innerHTML = `<tr><td colspan="8"><div class="empty-state">Error: ${(err.message||'Failed loading data')}</div></td></tr>`;
+    document.getElementById('tbody').innerHTML = `<tr><td colspan="9"><div class="empty-state">Error: ${(err.message||'Failed loading data')}</div></td></tr>`;
   }finally{
     syncBtn.classList.remove('spinning');
   }
