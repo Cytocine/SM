@@ -116,6 +116,36 @@
   .pill-toggle.ai-btn{background:rgba(45,212,191,0.15); border-color:var(--accent); color:var(--accent); font-weight:700;}
   .pill-toggle.ai-btn:hover{background:var(--accent); color:#04211c;}
 
+  .risk-input-wrap{
+    display:inline-flex; align-items:center; gap:5px;
+    background:var(--panel-2); border:1px solid var(--border); border-radius:8px;
+    padding:4px 8px; white-space:nowrap;
+  }
+  .risk-input-wrap label{font-size:10px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.3px;}
+  .risk-input-wrap input{
+    width:56px; background:transparent; border:none; color:var(--text);
+    font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600;
+  }
+  .risk-input-wrap input:focus{outline:none;}
+
+  .risk-panel{
+    display:flex; flex-wrap:wrap; gap:6px;
+    margin-top:8px; padding-top:8px; border-top:1px solid var(--border-soft);
+  }
+  .risk-chip{
+    font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted);
+    background:var(--panel-2); border:1px solid var(--border); border-radius:6px; padding:4px 8px;
+  }
+  .risk-chip strong{color:var(--text); font-weight:600;}
+  .risk-chip.warn{border-color:rgba(240,168,60,0.4);}
+  .risk-chip.warn strong{color:var(--amber);}
+
+  .setup-chip{
+    font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:600; letter-spacing:0.2px;
+    padding:2px 6px; border-radius:5px; white-space:nowrap;
+    background:rgba(240,168,60,0.15); color:var(--amber); border:1px solid rgba(240,168,60,0.35);
+  }
+
   .cart-badge{
     display:inline-flex; align-items:center; justify-content:center;
     background:var(--accent); color:#04211c; font-size:10px; font-weight:700;
@@ -409,6 +439,7 @@
     <div class="view-switch">
       <button class="view-tab active" id="tabTable">Table View</button>
       <button class="view-tab" id="tabBullish">🔥 Most Bullish Today</button>
+      <button class="view-tab" id="tabSetups">⚡ Setups</button>
       <button class="view-tab" id="tabHeatmap">Sector Heat Map</button>
       <button class="view-tab" id="tabNearEma">🎯 Near EMA34</button>
     </div>
@@ -421,6 +452,11 @@
     <button class="pill-toggle" id="scannerToggle" title="Filter stocks that turned bullish (2 candles) in a bullish sector">
       ▲ 2-Candle Turn
     </button>
+
+    <div class="risk-input-wrap" title="Dollar risk per trade used for position sizing (entry vs. ATR stop)">
+      <label for="riskPerTradeInput">Risk $</label>
+      <input id="riskPerTradeInput" type="number" min="1" step="1">
+    </div>
 
     <button class="pill-toggle" id="playPauseBtn" title="Auto-advance through sector groups">
       <span id="playIcon">▶</span> <span id="playText">Play Sectors</span>
@@ -504,6 +540,31 @@
             </tr>
           </thead>
           <tbody id="bullishTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Setups View: pre-breakout watchlist -->
+  <div id="setupsViewContainer" class="view-container">
+    <div class="above-ema-controls">
+      <span>Bullish-sector stocks coiling in a tight range, not yet triggered, within 8% of the breakout level.</span>
+    </div>
+    <div class="table-wrap">
+      <div class="scroll-region">
+        <table class="bullish-table">
+          <thead>
+            <tr>
+              <th data-skey="sym" style="text-align:left;">Symbol / Sector <span class="sarrow"></span></th>
+              <th data-skey="distToBreakoutPct">Dist to Trigger <span class="sarrow">▾</span></th>
+              <th data-skey="rangePct">Range Contraction <span class="sarrow"></span></th>
+              <th data-skey="volRatio">Vol Ratio <span class="sarrow"></span></th>
+              <th data-skey="rsW1">RS 1W <span class="sarrow"></span></th>
+              <th data-skey="today">Today <span class="sarrow"></span></th>
+              <th data-skey="price">Price <span class="sarrow"></span></th>
+            </tr>
+          </thead>
+          <tbody id="setupsTbody"></tbody>
         </table>
       </div>
     </div>
@@ -668,6 +729,8 @@ let groupData = {};
 let symReturns = {};
 let expandedGroup = null;
 let expandedBullishSym = null;
+let expandedSetupSym = null;
+let sSortKey = 'distToBreakoutPct', sSortDir = -1;
 let scannerTurnFilter = false; 
 let activeView = 'table';
 let selectedSymbol = null;
@@ -726,6 +789,46 @@ function saveCreds(key, secret, feed, geminiKey){
 function saveCart(){
   localStorage.setItem('sp_watchlist_cart', JSON.stringify(Array.from(watchlistCart)));
   document.getElementById('cartCount').textContent = watchlistCart.size;
+}
+
+// Risk / position sizing
+function getRiskPerTrade(){
+  const v = parseFloat(localStorage.getItem('sp_risk_per_trade'));
+  return (!isNaN(v) && v > 0) ? v : 200;
+}
+function saveRiskPerTrade(v){
+  const n = parseFloat(v);
+  localStorage.setItem('sp_risk_per_trade', (!isNaN(n) && n > 0) ? n : 200);
+}
+function computePositionSizing(entryPrice, stopPrice, riskDollars){
+  if(entryPrice == null || stopPrice == null || entryPrice <= stopPrice) return null;
+  const riskPerShare = entryPrice - stopPrice;
+  const shares = Math.floor(riskDollars / riskPerShare);
+  return {
+    riskPerShare,
+    shares,
+    positionValue: shares * entryPrice,
+    stopPct: (stopPrice - entryPrice) / entryPrice * 100,
+    target2R: entryPrice + riskPerShare * 2,
+    target3R: entryPrice + riskPerShare * 3
+  };
+}
+// Renders the position-sizing chip row shown under an expanded chart panel. Pass the raw entry
+// price and ATR-based stop for whichever symbol is currently active — returns '' when either is
+// missing so callers can splice it in unconditionally.
+function riskPanelHtml(entryPrice, stopPrice){
+  if(entryPrice == null || stopPrice == null || entryPrice <= stopPrice) return '';
+  const riskAmt = getRiskPerTrade();
+  const sizing = computePositionSizing(entryPrice, stopPrice, riskAmt);
+  if(!sizing || sizing.shares <= 0) return `<div class="risk-panel"><span class="risk-chip warn">Risk $${riskAmt} too small to size 1 share at this stop distance</span></div>`;
+  return `<div class="risk-panel">
+    <span class="risk-chip">Stop <strong>$${stopPrice.toFixed(2)}</strong> (${sizing.stopPct.toFixed(1)}%)</span>
+    <span class="risk-chip">Risk/Share <strong>$${sizing.riskPerShare.toFixed(2)}</strong></span>
+    <span class="risk-chip">Size @ $${riskAmt} risk <strong>${sizing.shares} sh</strong></span>
+    <span class="risk-chip">Position <strong>$${sizing.positionValue.toFixed(0)}</strong></span>
+    <span class="risk-chip">2R Target <strong>$${sizing.target2R.toFixed(2)}</strong></span>
+    <span class="risk-chip">3R Target <strong>$${sizing.target3R.toFixed(2)}</strong></span>
+  </div>`;
 }
 
 // Modals
@@ -982,6 +1085,7 @@ async function ensureHourlyBars(symbol, triggerRender=true){
     if(triggerRender){
       if(activeView === 'table') renderTable();
       else if(activeView === 'bullish') renderBullishScanner();
+      else if(activeView === 'setups') renderSetupsView();
     }
   }
 }
@@ -1003,7 +1107,7 @@ function computeVolRatio(bars, window=30){
 }
 
 function detectTightBreakout(bars, lookback=10, priorWindow=40){
-  if(!bars || bars.length < priorWindow + lookback + 1) return { breakout:false, rangePct:null };
+  if(!bars || bars.length < priorWindow + lookback + 1) return { breakout:false, isTight:false, rangePct:null, distToBreakoutPct:null };
   const recent = bars.slice(-lookback);
   const rHigh = Math.max(...recent.map(b=>b.h)), rLow = Math.min(...recent.map(b=>b.l));
   const rangePct = rLow ? (rHigh - rLow) / rLow * 100 : null;
@@ -1015,15 +1119,18 @@ function detectTightBreakout(bars, lookback=10, priorWindow=40){
     const h = Math.max(...w.map(b=>b.h)), l = Math.min(...w.map(b=>b.l));
     if(l) ranges.push((h-l)/l*100);
   }
-  if(!ranges.length || rangePct === null) return { breakout:false, rangePct };
+  if(!ranges.length || rangePct === null) return { breakout:false, isTight:false, rangePct, distToBreakoutPct:null };
   const avgRange = ranges.reduce((a,b)=>a+b,0) / ranges.length;
   const isTight = rangePct <= avgRange * 0.7;
 
   const priorHigh = Math.max(...bars.slice(-(lookback+1), -1).map(b=>b.h));
   const lastClose = bars[bars.length-1].c;
   const brokeOut = lastClose > priorHigh;
+  // How far price still has to travel to clear the same level the breakout trigger watches —
+  // this is what lets a "setting up" view show stocks before they fire, not just after.
+  const distToBreakoutPct = (priorHigh && !brokeOut) ? (priorHigh - lastClose) / lastClose * 100 : (brokeOut ? 0 : null);
 
-  return { breakout: isTight && brokeOut, rangePct, avgRange };
+  return { breakout: isTight && brokeOut, isTight, rangePct, avgRange, distToBreakoutPct };
 }
 
 const MIN_PRICE = 5;
@@ -1143,7 +1250,7 @@ function computeSymbolReturns(bars){
 
   const turnHit = checkStock2CandleTurn(bars);
   const volRatio = computeVolRatio(bars);
-  const { breakout: tightBreakout, rangePct } = detectTightBreakout(bars);
+  const { breakout: tightBreakout, isTight, rangePct, distToBreakoutPct } = detectTightBreakout(bars);
   const avgDollarVol = computeAvgDollarVol(bars);
 
   let atrStop = null, atrStopPct = null, stopIsStructural = false;
@@ -1164,7 +1271,7 @@ function computeSymbolReturns(bars){
     }
   }
 
-  return {today, w1, m1, m3, m6, ytd, closes, dates, turnHit, lastPrice: last, volRatio, tightBreakout, rangePct, avgDollarVol, atrStop, atrStopPct, stopIsStructural};
+  return {today, w1, m1, m3, m6, ytd, closes, dates, turnHit, lastPrice: last, volRatio, tightBreakout, isTight, rangePct, distToBreakoutPct, avgDollarVol, atrStop, atrStopPct, stopIsStructural};
 }
 
 function computeAvgDollarVol(bars, window=30){
@@ -1532,7 +1639,12 @@ function getAllStockList(){
         atrStop: r.atrStop,
         atrStopPct: r.atrStopPct,
         sectorBullish: d.turningBullish,
-        sectorTurnDate: d.turnDate
+        sectorTurnDate: d.turnDate,
+        isTight: r.isTight,
+        distToBreakoutPct: r.distToBreakoutPct,
+        rangePct: r.rangePct,
+        rsW1: r.rsW1,
+        rsM1: r.rsM1
       });
     }
   }
@@ -1550,6 +1662,21 @@ function getScannerHits(){
     }
   }
   return hits;
+}
+
+// "Setting up" watchlist: stocks in an already-bullish sector that are coiling in a tight range,
+// haven't triggered the (lagging) 2-candle turn yet, and sit within striking distance of the level
+// that would trigger it. This exists to surface candidates BEFORE the breakout, not after.
+const SETUP_MAX_DIST_PCT = 8;
+function getSetupWatchlist(){
+  return getAllStockList().filter(item =>
+    item.sectorBullish &&
+    !item.turnHit &&
+    item.isTight &&
+    !item.illiquid &&
+    item.distToBreakoutPct != null && item.distToBreakoutPct <= SETUP_MAX_DIST_PCT &&
+    (item.rsW1 == null || item.rsW1 > -5)
+  );
 }
 
 function orderedTickersForGroup(d){
@@ -1823,6 +1950,7 @@ function renderTable(){
             </div>
             ${pctSpan(d.tickers[activeSym] ? d.tickers[activeSym][sortKey==='name'?'m1':sortKey] : null)}
           </div>
+          ${riskPanelHtml(d.tickers[activeSym] ? d.tickers[activeSym].lastPrice : null, d.tickers[activeSym] ? d.tickers[activeSym].atrStop : null)}
           <div class="dual-chart-grid">
             <div class="chart-tf-block">
               <div class="chart-tf-label-row"><span class="chart-tf-label">1H</span><span class="chart-tf-stats"><span id="statTrendH" class="stat-pill">—</span><span id="statPvtH" class="stat-pill">—</span></span></div>
@@ -2005,6 +2133,7 @@ function renderBullishScanner(){
             </div>
             ${pctSpan(item.today)}
           </div>
+          ${riskPanelHtml(item.price, item.atrStop)}
           <div class="dual-chart-grid">
             <div class="chart-tf-block">
               <div class="chart-tf-label-row"><span class="chart-tf-label">1H</span><span class="chart-tf-stats"><span id="bStatTrendH" class="stat-pill">—</span><span id="bStatPvtH" class="stat-pill">—</span></span></div>
@@ -2045,6 +2174,121 @@ function renderBullishScanner(){
   });
 
   btbody.querySelectorAll('.cart-btn').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const sym = btn.getAttribute('data-cart-sym');
+      toggleCartSymbol(sym);
+    });
+  });
+}
+
+function renderSetupsView(){
+  const stbody = document.getElementById('setupsTbody');
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  let list = getSetupWatchlist();
+
+  if(q){
+    list = list.filter(item => item.sym.toLowerCase().includes(q) || item.sector.toLowerCase().includes(q));
+  }
+
+  list.sort((a,b)=>{
+    if(sSortKey === 'sym') return a.sym.localeCompare(b.sym) * (sSortDir===1?1:-1);
+    const av = a[sSortKey] !== undefined && a[sSortKey] != null ? a[sSortKey] : Infinity;
+    const bv = b[sSortKey] !== undefined && b[sSortKey] != null ? b[sSortKey] : Infinity;
+    return (av - bv) * sSortDir * -1;
+  });
+
+  if(!list.length){
+    destroyLiveCharts();
+    stbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">No stocks currently coiling near a breakout in a bullish sector. Check back after the next sync.</div></td></tr>`;
+    return;
+  }
+
+  let html = '', chartPanelState = null;
+  list.slice(0, 100).forEach((item)=>{
+    const isOpen = expandedSetupSym === item.sym;
+    const inCart = watchlistCart.has(item.sym);
+
+    html += `<tr class="group-row${isOpen?' expanded':''}" data-ssym="${item.sym}">
+      <td>
+        <div class="group-name">
+          <span class="chev">▸</span>
+          <button class="cart-btn ${inCart ? 'active' : ''}" data-cart-sym="${item.sym}">${inCart ? '★' : '☆'}</button>
+          <span class="sym" style="font-weight:700; color:var(--text); font-family:'JetBrains Mono',monospace;">${item.sym}</span>
+          <span style="color:var(--muted); font-size:11px;">(${item.sector}${item.sectorBullish && item.sectorTurnDate ? ' · bullish since '+fmtShortDate(item.sectorTurnDate) : ''})</span>
+          <span class="setup-chip">Coiling</span>
+        </div>
+      </td>
+      <td class="mono">${item.distToBreakoutPct != null ? item.distToBreakoutPct.toFixed(1)+'%' : '—'}</td>
+      <td class="mono">${item.rangePct != null ? item.rangePct.toFixed(1)+'%' : '—'}</td>
+      <td class="mono">${item.volRatio != null ? item.volRatio.toFixed(2)+'x' : '—'}</td>
+      <td>${pctSpan(item.rsW1)}</td>
+      <td>${pctSpan(item.today)}</td>
+      <td class="mono">$${item.price.toFixed(2)}</td>
+    </tr>`;
+
+    if(isOpen){
+      if(!barsBySymbol1H[item.sym] && !hourlyFetchInFlight.has(item.sym)) ensureHourlyBars(item.sym);
+      chartPanelState = {
+        activeSym: item.sym,
+        mountHourly: !!(barsBySymbol1H[item.sym] && barsBySymbol1H[item.sym].length >= 40),
+        hourlyBars: barsBySymbol1H[item.sym],
+        mountDaily: !!(barsBySymbol[item.sym] && barsBySymbol[item.sym].length >= 40),
+        dailyBars: barsBySymbol[item.sym]
+      };
+
+      html += `<tr class="chart-row"><td colspan="7">
+        <div class="chart-panel">
+          <div class="chart-panel-head">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span class="chart-title">${item.sector} · <strong style="color:var(--text);">${item.sym}</strong> · ${item.distToBreakoutPct != null ? item.distToBreakoutPct.toFixed(1)+'% from trigger' : ''}</span>
+              <button class="pill-toggle" id="sCartToggleBtn" style="padding:3px 8px; font-size:11px;">
+                ${inCart ? '★ In Watchlist Cart' : '+ Add to Watchlist Cart'}
+              </button>
+            </div>
+            ${pctSpan(item.today)}
+          </div>
+          ${riskPanelHtml(item.price, item.atrStop)}
+          <div class="dual-chart-grid">
+            <div class="chart-tf-block">
+              <div class="chart-tf-label-row"><span class="chart-tf-label">1H</span><span class="chart-tf-stats"><span id="sStatTrendH" class="stat-pill">—</span><span id="sStatPvtH" class="stat-pill">—</span></span></div>
+              <div class="lwc-price" id="sLwcPriceH"></div><div class="lwc-lower" id="sLwcLowerH"></div>
+            </div>
+            <div class="chart-tf-block">
+              <div class="chart-tf-label-row"><span class="chart-tf-label">1D</span><span class="chart-tf-stats"><span id="sStatTrendD" class="stat-pill">—</span><span id="sStatPvtD" class="stat-pill">—</span></span></div>
+              <div class="lwc-price" id="sLwcPriceD"></div><div class="lwc-lower" id="sLwcLowerD"></div>
+            </div>
+          </div>
+        </div>
+      </td></tr>`;
+    }
+  });
+
+  destroyLiveCharts();
+  stbody.innerHTML = html;
+
+  if(chartPanelState){
+    if(chartPanelState.mountHourly) mountTimeframeChart('h', 'sLwcPriceH', 'sLwcLowerH', 'sStatTrendH', 'sStatPvtH', chartPanelState.hourlyBars);
+    if(chartPanelState.mountDaily) mountTimeframeChart('d', 'sLwcPriceD', 'sLwcLowerD', 'sStatTrendD', 'sStatPvtD', chartPanelState.dailyBars, 30);
+
+    const sCartToggleBtn = document.getElementById('sCartToggleBtn');
+    if(sCartToggleBtn){
+      sCartToggleBtn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        toggleCartSymbol(chartPanelState.activeSym);
+      });
+    }
+  }
+
+  stbody.querySelectorAll('tr.group-row').forEach(row=>{
+    row.addEventListener('click', ()=>{
+      const sym = row.getAttribute('data-ssym');
+      expandedSetupSym = expandedSetupSym === sym ? null : sym;
+      renderSetupsView();
+    });
+  });
+
+  stbody.querySelectorAll('.cart-btn').forEach(btn=>{
     btn.addEventListener('click', (e)=>{
       e.stopPropagation();
       const sym = btn.getAttribute('data-cart-sym');
@@ -2231,10 +2475,12 @@ function switchView(view){
   activeView = view;
   document.getElementById('tableViewContainer').classList.toggle('active', activeView === 'table');
   document.getElementById('bullishViewContainer').classList.toggle('active', activeView === 'bullish');
+  document.getElementById('setupsViewContainer').classList.toggle('active', activeView === 'setups');
   document.getElementById('heatmapViewContainer').classList.toggle('active', activeView === 'heatmap');
   document.getElementById('nearEmaViewContainer').classList.toggle('active', activeView === 'nearema');
   document.getElementById('tabTable').classList.toggle('active', activeView === 'table');
   document.getElementById('tabBullish').classList.toggle('active', activeView === 'bullish');
+  document.getElementById('tabSetups').classList.toggle('active', activeView === 'setups');
   document.getElementById('tabHeatmap').classList.toggle('active', activeView === 'heatmap');
   document.getElementById('tabNearEma').classList.toggle('active', activeView === 'nearema');
 
@@ -2242,6 +2488,7 @@ function switchView(view){
 
   if(activeView === 'heatmap') renderHeatMap();
   else if(activeView === 'bullish') renderBullishScanner();
+  else if(activeView === 'setups') renderSetupsView();
   else if(activeView === 'nearema') renderNearEmaGrid();
   else renderTable();
 }
@@ -2262,6 +2509,16 @@ function updateSortHeaders(){
     if(!arrow) return;
     if(th.getAttribute('data-bkey') === bSortKey){
       arrow.textContent = bSortDir === 1 ? '▴' : '▾';
+    } else {
+      arrow.textContent = '';
+    }
+  });
+
+  document.querySelectorAll('thead th[data-skey]').forEach(th=>{
+    const arrow = th.querySelector('.sarrow');
+    if(!arrow) return;
+    if(th.getAttribute('data-skey') === sSortKey){
+      arrow.textContent = sSortDir === 1 ? '▴' : '▾';
     } else {
       arrow.textContent = '';
     }
@@ -2288,6 +2545,16 @@ document.querySelectorAll('thead th[data-bkey]').forEach(th=>{
   });
 });
 
+document.querySelectorAll('thead th[data-skey]').forEach(th=>{
+  th.addEventListener('click', ()=>{
+    const key = th.getAttribute('data-skey');
+    if(sSortKey === key){ sSortDir *= -1; }
+    else { sSortKey = key; sSortDir = -1; }
+    updateSortHeaders();
+    renderSetupsView();
+  });
+});
+
 // Watchlist Cart & Exporting
 function toggleCartSymbol(sym){
   if(watchlistCart.has(sym)){
@@ -2298,6 +2565,7 @@ function toggleCartSymbol(sym){
   saveCart();
   if(activeView === 'table') renderTable();
   else if(activeView === 'bullish') renderBullishScanner();
+  else if(activeView === 'setups') renderSetupsView();
   else if(activeView === 'nearema') renderNearEmaGrid();
   else renderHeatMap();
 }
@@ -2425,6 +2693,7 @@ document.getElementById('tabTable').addEventListener('click', () => switchView('
 document.getElementById('tabBullish').addEventListener('click', () => switchView('bullish'));
 document.getElementById('tabHeatmap').addEventListener('click', () => switchView('heatmap'));
 document.getElementById('tabNearEma').addEventListener('click', () => switchView('nearema'));
+document.getElementById('tabSetups').addEventListener('click', () => switchView('setups'));
 
 document.getElementById('nearEmaThreshold').addEventListener('change', (e) => {
   nearEmaThresholdPct = parseFloat(e.target.value);
@@ -2453,9 +2722,19 @@ document.getElementById('exportBullishBtn').addEventListener('click', exportTop1
 document.getElementById('searchInput').addEventListener('input', () => {
   if(activeView === 'table') renderTable();
   else if(activeView === 'bullish') renderBullishScanner();
+  else if(activeView === 'setups') renderSetupsView();
   else if(activeView === 'nearema') renderNearEmaGrid();
   else renderHeatMap();
 });
+
+document.getElementById('riskPerTradeInput').addEventListener('change', (e) => {
+  saveRiskPerTrade(e.target.value);
+  e.target.value = getRiskPerTrade();
+  if(activeView === 'table') renderTable();
+  else if(activeView === 'bullish') renderBullishScanner();
+  else if(activeView === 'setups') renderSetupsView();
+});
+document.getElementById('riskPerTradeInput').value = getRiskPerTrade();
 
 document.getElementById('syncBtn').addEventListener('click', () => loadAll(true));
 
@@ -2472,6 +2751,7 @@ async function loadAll(forceRefresh=false){
     updateSortHeaders();
     if(activeView === 'table') renderTable();
     else if(activeView === 'bullish') renderBullishScanner();
+    else if(activeView === 'setups') renderSetupsView();
     else if(activeView === 'nearema') renderNearEmaGrid();
     else renderHeatMap();
   }catch(err){
