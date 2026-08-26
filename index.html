@@ -241,6 +241,10 @@
     display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;
     font-size:12px; color:var(--muted);
   }
+  /* 4H Buy Scan progress bar */
+  .progress-wrap{height:3px; background:var(--panel-2); overflow:hidden; border-radius:2px; margin-bottom:12px;}
+  .progress-bar{height:100%; width:0%; background:var(--up); transition:width .2s;}
+  .fresh-tag{font-size:10.5px; font-weight:700; font-family:'JetBrains Mono',monospace; color:var(--up);}
   .multi-chart-grid{
     display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr));
     gap:14px;
@@ -413,6 +417,7 @@
       <button class="view-tab" id="tabBullish">🔥 Most Bullish Today</button>
       <button class="view-tab" id="tabHeatmap">Sector Heat Map</button>
       <button class="view-tab" id="tabNearEma">🎯 Near EMA34</button>
+      <button class="view-tab" id="tabBuy4h">⚡ 4H Buy Scan</button>
     </div>
 
     <div class="search-wrap">
@@ -548,6 +553,33 @@
       </div>
     </div>
     <div class="multi-chart-grid" id="nearEmaGrid"></div>
+  </div>
+
+  <!-- 4H Buy Scan View -->
+  <div id="buy4hViewContainer" class="view-container">
+    <div class="above-ema-controls">
+      <button class="pill-toggle" id="buy4hScanBtn">⚡ Scan 4H Buy Signals</button>
+      <span id="buy4hStatusText" style="color:var(--muted); font-size:12px;">Uses the same Supertrend + LinReg-cloud trend engine as the chart panel, on 4-hour candles — flags symbols whose trend flipped bullish within the last 2 candles.</span>
+    </div>
+    <div class="progress-wrap"><div class="progress-bar" id="buy4hProgressBar"></div></div>
+    <div class="table-wrap">
+      <div class="scroll-region">
+        <table class="bullish-table">
+          <thead>
+            <tr>
+              <th style="text-align:left;">Symbol / Sector</th>
+              <th>4H</th>
+              <th>Signal</th>
+              <th>Price</th>
+              <th>Dist. from Supertrend</th>
+            </tr>
+          </thead>
+          <tbody id="buy4hTbody">
+            <tr><td colspan="5"><div class="empty-state">Tap "Scan 4H Buy Signals" to check every symbol for a fresh 4H trend-flip to bullish.</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </main>
 
@@ -1066,6 +1098,178 @@ function ema(series, period){
   const k = 2/(period+1), out = [series[0]];
   for(let i=1;i<series.length;i++) out.push(series[i]*k + out[i-1]*(1-k));
   return out;
+}
+
+// ============================================================
+// 4H BUY SCAN — Supertrend + LinReg/EMA trend-cloud engine
+// (ported from the TrendCloud/SuperCloud scanner; same math, applied to 4H bars)
+// ============================================================
+const BUY4H_ATR_LEN = 20;
+const BUY4H_ATR_MULT = 2.5;
+const BUY4H_FRESH_LOOKBACK = 2; // candles — "buy within 2 candles"
+
+// EMA that tolerates leading NaNs (linReg is undefined for the first linRegLen-1 bars);
+// the plain ema() above assumes an all-numeric series and would propagate NaN forever otherwise.
+function emaSkipNaN(arr, period){
+  const n = arr.length, out = new Array(n).fill(NaN);
+  const k = 2/(period+1);
+  let prev = null;
+  for(let i=0;i<n;i++){
+    const v = arr[i];
+    if(v===null || v===undefined || Number.isNaN(v)){ out[i]=NaN; continue; }
+    if(prev===null){ prev=v; out[i]=v; }
+    else { prev = v*k + prev*(1-k); out[i]=prev; }
+  }
+  return out;
+}
+
+function linRegEndpointSeries(arr, len){
+  const n = arr.length, out = new Array(n).fill(NaN);
+  for(let i=len-1;i<n;i++){
+    let sumX=0,sumY=0,sumXY=0,sumXX=0;
+    for(let j=0;j<len;j++){
+      const x=j, y=arr[i-len+1+j];
+      sumX+=x; sumY+=y; sumXY+=x*y; sumXX+=x*x;
+    }
+    const denom = len*sumXX - sumX*sumX;
+    const slope = denom===0 ? 0 : (len*sumXY - sumX*sumY)/denom;
+    const intercept = (sumY - slope*sumX)/len;
+    out[i] = intercept + slope*(len-1);
+  }
+  return out;
+}
+
+function computeSupertrendCloud(bars, atrLen, atrMult){
+  const n = bars.length;
+  if(n < 5) return null;
+  const closes = bars.map(b=>b.c);
+  const tr = new Array(n);
+  for(let i=0;i<n;i++){
+    const h=bars[i].h, l=bars[i].l, prevC = i>0 ? bars[i-1].c : bars[i].c;
+    tr[i] = Math.max(h-l, Math.abs(h-prevC), Math.abs(l-prevC));
+  }
+  const atr = ema(tr, atrLen);
+  const hl2 = bars.map(b=>(b.h+b.l)/2);
+  const upBase = hl2.map((v,i)=> v - atrMult*atr[i]);
+  const dnBase = hl2.map((v,i)=> v + atrMult*atr[i]);
+
+  const upBand = new Array(n), dnBand = new Array(n), trend = new Array(n);
+  for(let i=0;i<n;i++){
+    if(i===0){ upBand[i]=upBase[i]; dnBand[i]=dnBase[i]; trend[i]=1; continue; }
+    upBand[i] = (bars[i-1].c > upBand[i-1]) ? Math.max(upBase[i], upBand[i-1]) : upBase[i];
+    dnBand[i] = (bars[i-1].c < dnBand[i-1]) ? Math.min(dnBase[i], dnBand[i-1]) : dnBase[i];
+    if(trend[i-1]===-1 && bars[i].c > dnBand[i-1]){ trend[i] = 1; upBand[i] = upBase[i]; }
+    else if(trend[i-1]===1 && bars[i].c < upBand[i-1]){ trend[i] = -1; dnBand[i] = dnBase[i]; }
+    else{ trend[i] = trend[i-1]; }
+  }
+  const supertrend = bars.map((b,i)=> trend[i]===1 ? upBand[i] : dnBand[i]);
+
+  const linRegLen = 80, emaLen = 20;
+  const linReg = linRegEndpointSeries(closes, linRegLen);
+  const emaLR = emaSkipNaN(linReg, emaLen);
+
+  const buyArrow = new Array(n).fill(false), sellArrow = new Array(n).fill(false);
+  for(let i=1;i<n;i++){
+    buyArrow[i] = (trend[i]===1 && trend[i-1]===-1);
+    sellArrow[i] = (trend[i]===-1 && trend[i-1]===1);
+  }
+
+  return { trend, supertrend, linReg, emaLR, buyArrow, sellArrow };
+}
+
+// Most recent confirmed trend-flip (BUY or SELL), and how many candles ago it fired.
+function lastConfirmedSignal(ind, bars){
+  const n = bars.length;
+  for(let i=n-1;i>=0;i--){
+    if(ind.buyArrow[i]) return { type:'BUY', barsAgo:n-1-i, price:bars[i].c };
+    if(ind.sellArrow[i]) return { type:'SELL', barsAgo:n-1-i, price:bars[i].c };
+  }
+  return { type:null, barsAgo:null, price:null };
+}
+
+let buy4hResults = [];
+let buy4hScanning = false;
+
+async function runBuy4hScan(){
+  if(buy4hScanning) return;
+  buy4hScanning = true;
+  const btn = document.getElementById('buy4hScanBtn');
+  const statusEl = document.getElementById('buy4hStatusText');
+  const bar = document.getElementById('buy4hProgressBar');
+  const originalStatusText = statusEl.textContent;
+  btn.disabled = true; btn.textContent = 'Scanning…';
+  statusEl.textContent = 'Fetching 4H bars from Alpaca…';
+  bar.style.width = '2%';
+
+  const creds = getCreds();
+  const end = new Date(), start = new Date();
+  start.setDate(start.getDate() - 200); // enough 4H history for the 80-bar linreg + EMA34-ish warmup
+  const startStr = fmtDate(start), endStr = fmtDate(end);
+
+  const results = [];
+  const chunkSize = 30;
+  let done = 0;
+  try{
+    for(let i=0;i<ALL_SYMBOLS.length;i+=chunkSize){
+      const chunk = ALL_SYMBOLS.slice(i, i+chunkSize);
+      try{
+        const barsMap = await fetchChunk(chunk, startStr, endStr, creds, '4Hour');
+        for(const sym of chunk){
+          const bars = barsMap[sym] || [];
+          if(bars.length < 40) continue;
+          const ind = computeSupertrendCloud(bars, BUY4H_ATR_LEN, BUY4H_ATR_MULT);
+          if(!ind) continue;
+          const sig = lastConfirmedSignal(ind, bars);
+          if(sig.type === 'BUY' && sig.barsAgo !== null && sig.barsAgo <= BUY4H_FRESH_LOOKBACK){
+            const lastIdx = bars.length - 1;
+            const price = bars[lastIdx].c;
+            const st = ind.supertrend[lastIdx];
+            results.push({
+              symbol: sym,
+              sector: TICKER_SECTOR[sym] || 'General',
+              price,
+              barsAgo: sig.barsAgo,
+              distPct: ((price - st) / price * 100),
+              sparkCloses: bars.slice(-30).map(b=>b.c),
+              sparkSupertrend: ind.supertrend.slice(-30)
+            });
+          }
+        }
+      }catch(err){
+        console.error('4H scan chunk failed', err);
+      }
+      done += chunk.length;
+      bar.style.width = Math.round(done/ALL_SYMBOLS.length*100)+'%';
+    }
+    results.sort((a,b)=> a.barsAgo - b.barsAgo);
+    buy4hResults = results;
+    statusEl.textContent = `${results.length} symbol${results.length===1?'':'s'} flipped bullish on 4H within the last ${BUY4H_FRESH_LOOKBACK} candles · ${new Date().toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'})}`;
+  }catch(err){
+    statusEl.textContent = `Scan failed: ${err.message || err}`;
+  }finally{
+    buy4hScanning = false;
+    btn.disabled = false; btn.textContent = '⚡ Scan 4H Buy Signals';
+    setTimeout(()=>{ bar.style.width='0%'; }, 500);
+    renderBuy4hScan();
+  }
+}
+
+function renderBuy4hScan(){
+  const tbody = document.getElementById('buy4hTbody');
+  if(!buy4hResults.length){
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">No symbols have flipped bullish on the 4H timeframe within the last ${BUY4H_FRESH_LOOKBACK} candles right now. Tap Scan again after the next candle closes.</div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = buy4hResults.map(r=>{
+    const freshLabel = r.barsAgo === 0 ? 'This candle' : `${r.barsAgo} candle${r.barsAgo>1?'s':''} ago`;
+    return `<tr>
+      <td><div class="group-name"><span class="sym mono" style="font-weight:700;">${r.symbol}</span></div><div style="color:var(--muted); font-size:11px; margin-top:2px;">${r.sector}</div></td>
+      <td>${sparkSvg(r.sparkCloses, r.sparkSupertrend)}</td>
+      <td><span class="fresh-tag">▲ BUY · ${freshLabel}</span></td>
+      <td class="mono">$${r.price.toFixed(2)}</td>
+      <td class="mono" style="color:${r.distPct>=0?'var(--up)':'var(--down)'}">${r.distPct>=0?'+':''}${r.distPct.toFixed(2)}%</td>
+    </tr>`;
+  }).join('');
 }
 
 function avg(arr){
@@ -2234,16 +2438,19 @@ function switchView(view){
   document.getElementById('bullishViewContainer').classList.toggle('active', activeView === 'bullish');
   document.getElementById('heatmapViewContainer').classList.toggle('active', activeView === 'heatmap');
   document.getElementById('nearEmaViewContainer').classList.toggle('active', activeView === 'nearema');
+  document.getElementById('buy4hViewContainer').classList.toggle('active', activeView === 'buy4h');
   document.getElementById('tabTable').classList.toggle('active', activeView === 'table');
   document.getElementById('tabBullish').classList.toggle('active', activeView === 'bullish');
   document.getElementById('tabHeatmap').classList.toggle('active', activeView === 'heatmap');
   document.getElementById('tabNearEma').classList.toggle('active', activeView === 'nearema');
+  document.getElementById('tabBuy4h').classList.toggle('active', activeView === 'buy4h');
 
   if(activeView !== 'nearema') destroyMultiCharts();
 
   if(activeView === 'heatmap') renderHeatMap();
   else if(activeView === 'bullish') renderBullishScanner();
   else if(activeView === 'nearema') renderNearEmaGrid();
+  else if(activeView === 'buy4h') renderBuy4hScan();
   else renderTable();
 }
 
@@ -2426,6 +2633,8 @@ document.getElementById('tabTable').addEventListener('click', () => switchView('
 document.getElementById('tabBullish').addEventListener('click', () => switchView('bullish'));
 document.getElementById('tabHeatmap').addEventListener('click', () => switchView('heatmap'));
 document.getElementById('tabNearEma').addEventListener('click', () => switchView('nearema'));
+document.getElementById('tabBuy4h').addEventListener('click', () => switchView('buy4h'));
+document.getElementById('buy4hScanBtn').addEventListener('click', runBuy4hScan);
 
 document.getElementById('nearEmaThreshold').addEventListener('change', (e) => {
   nearEmaThresholdPct = parseFloat(e.target.value);
