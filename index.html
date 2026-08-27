@@ -175,6 +175,18 @@
   .badge.chase-low{background:var(--up-dim); color:var(--up); border:1px solid rgba(52,211,153,0.35);}
   .badge.chase-medium{background:rgba(240,168,60,0.15); color:var(--amber); border:1px solid rgba(240,168,60,0.45);}
   .badge.chase-high{background:var(--down-dim); color:var(--down); border:1px solid rgba(248,113,113,0.4);}
+  .tc-header{display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:10px 12px; background:#0d1219; border:1px solid var(--border); border-radius:10px 10px 0 0; border-bottom:none;}
+  .tc-header .tc-sym{font-weight:700; font-size:15px; letter-spacing:.3px;}
+  .tc-header .tc-price{font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--text);}
+  .tc-header .tc-chg{font-family:'JetBrains Mono',monospace; font-size:12px;}
+  .tc-pill{font-family:'JetBrains Mono',monospace; font-size:11px; padding:4px 9px; border-radius:6px; background:#131a24; border:1px solid var(--border); color:var(--muted); display:inline-flex; align-items:center; gap:5px;}
+  .tc-pill.bull{color:#0ebb23; border-color:rgba(14,187,35,0.35); background:rgba(14,187,35,0.08);}
+  .tc-pill.bear{color:#ff5c6c; border-color:rgba(255,92,108,0.35); background:rgba(255,92,108,0.08);}
+  .tc-pill.entry{color:var(--text); margin-left:auto;}
+  .tc-chart-shell{border:1px solid var(--border); border-top:none; border-radius:0 0 10px 10px; background:#0a0e14; padding:8px 8px 8px 40px; position:relative;}
+  .tc-toolbar{position:absolute; left:8px; top:8px; bottom:8px; width:28px; display:flex; flex-direction:column; align-items:center; gap:8px; padding-top:2px;}
+  .tc-toolbar .tc-tool{width:26px; height:26px; border-radius:6px; display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:12px; background:transparent;}
+  .tc-toolbar .tc-tool.active{background:rgba(45,212,191,0.18); color:var(--accent);}
   tr.buy4h-row{cursor:pointer; transition:background .12s;}
   tr.buy4h-row:hover td{background:var(--panel-2);}
   tr.buy4h-row.selected td{background:var(--accent-dim);}
@@ -696,7 +708,9 @@ XOM:'Energy',CVX:'Energy',COP:'Energy',EOG:'Energy',OXY:'Energy',DVN:'Energy',SL
 LIN:'Materials',APD:'Materials',SHW:'Materials',ECL:'Materials',NEM:'Materials',FCX:'Materials',NUE:'Materials',STLD:'Materials',PKG:'Materials',IP:'Materials',VMC:'Materials',MLM:'Materials',AA:'Materials',AEM:'Materials',CC:'Materials',CRML:'Materials',DD:'Materials',DOW:'Materials',EQX:'Materials',PPG:'Materials',VALE:'Materials',
 NEE:'Utilities',DUK:'Utilities',SO:'Utilities',AEP:'Utilities',EXC:'Utilities',SRE:'Utilities',WEC:'Utilities',AWK:'Utilities',D:'Utilities',ED:'Utilities',ETR:'Utilities',PCG:'Utilities',
 EQIX:'Real Estate',DLR:'Real Estate',PLD:'Real Estate',O:'Real Estate',SPG:'Real Estate',AMH:'Real Estate',AVB:'Real Estate',EQR:'Real Estate',WELL:'Real Estate',VTR:'Real Estate',AMT:'Real Estate',CCI:'Real Estate',HST:'Real Estate',OPEN:'Real Estate',PSA:'Real Estate',Z:'Real Estate',
-SPY:'ETF/Index',QQQ:'ETF/Index',IWM:'ETF/Index',TNA:'ETF/Index',DIA:'ETF/Index',GLD:'ETF/Index',SLV:'ETF/Index',USO:'ETF/Index',UNG:'ETF/Index',TLT:'ETF/Index',HYG:'ETF/Index',UUP:'ETF/Index',VXX:'ETF/Index',ARKK:'ETF/Index',XLF:'ETF/Index',XLE:'ETF/Index',XLK:'ETF/Index',XLV:'ETF/Index',XLY:'ETF/Index',XLI:'ETF/Index',XLB:'ETF/Index',XLU:'ETF/Index',XLRE:'ETF/Index',XLC:'ETF/Index',XLP:'ETF/Index'
+SPY:'ETF/Index',QQQ:'ETF/Index',IWM:'ETF/Index',TNA:'ETF/Index',DIA:'ETF/Index',GLD:'ETF/Index',SLV:'ETF/Index',USO:'ETF/Index',UNG:'ETF/Index',TLT:'ETF/Index',HYG:'ETF/Index',UUP:'ETF/Index',VXX:'ETF/Index',ARKK:'ETF/Index',XLF:'ETF/Index',XLE:'ETF/Index',XLK:'ETF/Index',XLV:'ETF/Index',XLY:'ETF/Index',XLI:'ETF/Index',XLB:'ETF/Index',XLU:'ETF/Index',XLRE:'ETF/Index',XLC:'ETF/Index',XLP:'ETF/Index',
+FSLR:'Solar & Renewable Energy',ENPH:'Solar & Renewable Energy',SEDG:'Solar & Renewable Energy',RUN:'Solar & Renewable Energy',NOVA:'Solar & Renewable Energy',ARRY:'Solar & Renewable Energy',SHLS:'Solar & Renewable Energy',CSIQ:'Solar & Renewable Energy',PLUG:'Solar & Renewable Energy',FCEL:'Solar & Renewable Energy',
+AVAV:'Drone & AI',KTOS:'Drone & AI',DPRO:'Drone & AI',ONDS:'Drone & AI',EH:'Drone & AI',RCAT:'Drone & AI',AIRO:'Drone & AI',UMAC:'Drone & AI',SOUN:'Drone & AI',BBAI:'Drone & AI'
 };
 
 const GROUPS = {};
@@ -1247,11 +1261,13 @@ async function runBuy4hScan(){
             const price = bars[lastIdx].c;
             const st = ind.supertrend[lastIdx];
             const distPct = (price - st) / price * 100;
+            const flipIdx = Math.max(0, lastIdx - sig.barsAgo);
             barsBySymbol4H[sym] = bars;
             results.push({
               symbol: sym,
               sector: TICKER_SECTOR[sym] || 'General',
               price,
+              entryPrice: bars[flipIdx].c,
               barsAgo: sig.barsAgo,
               distPct,
               chaseRisk: buy4hChaseRisk(sig.barsAgo, distPct),
@@ -1296,12 +1312,25 @@ function renderBuy4hScan(){
   }
 
   const chartRowHtml = (r) => `<tr class="chart-row"><td colspan="6">
-    <div class="chart-panel">
-      <div class="chart-panel-head">
-        <span class="chart-title">${r.symbol} · 4H Supertrend / LinReg Cloud</span>
-        <span class="badge chase-${r.chaseRisk}">Chase Risk: ${CHASE_RISK_LABEL[r.chaseRisk]}</span>
+    <div class="chart-panel" style="padding:0; border:none; background:transparent;">
+      <div class="tc-header">
+        <span class="tc-sym">${r.symbol}</span>
+        <span class="tc-price">$${r.price.toFixed(2)}</span>
+        <span class="tc-chg" style="color:${r.distPct>=0?'#0ebb23':'#ff5c6c'}">${r.distPct>=0?'+':''}${r.distPct.toFixed(2)}%</span>
+        <span class="tc-pill bull" id="buy4hPill1h_${r.symbol}">1H: …</span>
+        <span class="tc-pill bull">4H: BULL</span>
+        <span class="tc-pill entry">Entry: $${r.entryPrice.toFixed(2)}</span>
+        <span class="badge chase-${r.chaseRisk}">Chase: ${CHASE_RISK_LABEL[r.chaseRisk]}</span>
       </div>
-      <div class="lwc-price" id="buy4hChartEl" style="height:260px;"></div>
+      <div class="tc-chart-shell">
+        <div class="tc-toolbar">
+          <span class="tc-tool active">↖</span>
+          <span class="tc-tool">╱</span>
+          <span class="tc-tool">―</span>
+          <span class="tc-tool">🗑</span>
+        </div>
+        <div class="lwc-price" id="buy4hChartEl" style="height:260px;"></div>
+      </div>
     </div>
   </td></tr>`;
 
@@ -1324,6 +1353,13 @@ function renderBuy4hScan(){
   if(expandedBuy4hSym){
     const bars = barsBySymbol4H[expandedBuy4hSym];
     if(bars && bars.length >= 40) buy4hChart = mountBuy4hChart('buy4hChartEl', bars);
+    fetch1hTrendLabel(expandedBuy4hSym).then(label=>{
+      const pill = document.getElementById(`buy4hPill1h_${expandedBuy4hSym}`);
+      if(!pill) return; // panel may have closed/changed before this resolved
+      if(!label){ pill.textContent = '1H: n/a'; pill.className = 'tc-pill'; return; }
+      pill.textContent = `1H: ${label.toUpperCase()}`;
+      pill.className = `tc-pill ${label}`;
+    });
   }
 
   tbody.querySelectorAll('tr.buy4h-row').forEach(row=>{
@@ -1646,8 +1682,9 @@ function destroyBuy4hChart(){
   }
 }
 
-// Chart for a 4H Buy Scan hit: candles + the same Supertrend/LinReg-cloud line the scan
-// flipped on, plus a marker on the candle where the trend actually turned bullish.
+// Chart for a 4H Buy Scan hit, styled after the TrendCloud reference look:
+// cyan/magenta candles, a green/red translucent cloud hugging the Supertrend step-line,
+// and BUY/SELL arrow markers.
 function mountBuy4hChart(elId, bars, displayLimit=60){
   if(typeof LightweightCharts === 'undefined') return null;
   const el = document.getElementById(elId);
@@ -1655,23 +1692,34 @@ function mountBuy4hChart(elId, bars, displayLimit=60){
   const ind = computeSupertrendCloud(bars, BUY4H_ATR_LEN, BUY4H_ATR_MULT);
   if(!ind) return null;
 
+  const UP_COLOR = '#22d3ee';   // cyan
+  const DOWN_COLOR = '#ec4899'; // magenta
+  const TREND_LINE = {1:'#0ebb23', '-1':'#ff5c6c'};
+  const TREND_FILL_TOP = {1:'rgba(14,187,35,0.28)', '-1':'rgba(255,92,108,0.05)'};
+  const TREND_FILL_BOTTOM = {1:'rgba(14,187,35,0.02)', '-1':'rgba(255,92,108,0.30)'};
+
   const chart = LightweightCharts.createChart(el, {
     autoSize: true,
     layout:{ background:{color:'transparent'}, textColor:'#8a95a3', fontFamily:"'JetBrains Mono', monospace", fontSize:10 },
-    grid:{ vertLines:{visible:false}, horzLines:{visible:false} },
-    rightPriceScale:{ borderColor:'#232a33', autoScale:true },
-    timeScale:{ borderColor:'#232a33', timeVisible:true, secondsVisible:false, barSpacing:7 },
+    grid:{ vertLines:{visible:false}, horzLines:{color:'rgba(255,255,255,0.03)'} },
+    rightPriceScale:{ borderColor:'#1c232d', autoScale:true },
+    timeScale:{ borderColor:'#1c232d', timeVisible:true, secondsVisible:false, barSpacing:7 },
     crosshair:{ mode: LightweightCharts.CrosshairMode.Normal }
   });
-  const candleSeries = chart.addCandlestickSeries({ borderVisible:false, wickVisible:true });
+  const candleSeries = chart.addCandlestickSeries({
+    upColor: UP_COLOR, downColor: DOWN_COLOR,
+    wickUpColor: UP_COLOR, wickDownColor: DOWN_COLOR,
+    borderVisible:false, wickVisible:true
+  });
 
   const startIdx = displayLimit ? Math.max(0, bars.length - displayLimit) : 0;
   const displayBars = bars.slice(startIdx);
   const validBars = displayBars.map((b,j)=>({ time: Math.floor(new Date(b.t).getTime()/1000), idx: startIdx+j, b }));
   candleSeries.setData(validBars.map(v => ({ time:v.time, open:v.b.o, high:v.b.h, low:v.b.l, close:v.b.c })));
 
-  // Supertrend line, colored per trend regime segment (same green/red convention as elsewhere).
-  const TREND_COLOR = {1:'#0ebb23', '-1':'#ff5c6c'};
+  // Supertrend step-line + trend-colored cloud. invertFilledArea makes the fill hug the
+  // side of the line where price actually sits: upward (toward candles) in an uptrend,
+  // downward (toward candles) in a downtrend — matching the reference's cloud look.
   let runStart = 0;
   for(let i=1;i<=validBars.length;i++){
     const changed = i === validBars.length || ind.trend[validBars[i].idx] !== ind.trend[validBars[runStart].idx];
@@ -1679,7 +1727,12 @@ function mountBuy4hChart(elId, bars, displayLimit=60){
       const from = runStart > 0 ? runStart - 1 : runStart;
       const trendVal = ind.trend[validBars[runStart].idx];
       const points = validBars.slice(from, i).map(v => ({ time:v.time, value:ind.supertrend[v.idx] }));
-      const seg = chart.addLineSeries({ color: TREND_COLOR[trendVal], lineWidth:2, priceLineVisible:false, lastValueVisible:false });
+      const seg = chart.addAreaSeries({
+        lineColor: TREND_LINE[trendVal], lineWidth:2,
+        topColor: TREND_FILL_TOP[trendVal], bottomColor: TREND_FILL_BOTTOM[trendVal],
+        invertFilledArea: trendVal === 1,
+        priceLineVisible:false, lastValueVisible:false, crosshairMarkerVisible:false
+      });
       seg.setData(points);
       runStart = i;
     }
@@ -1696,6 +1749,23 @@ function mountBuy4hChart(elId, bars, displayLimit=60){
 
   chart.timeScale().fitContent();
   return chart;
+}
+
+// Fetches 1H bars for a symbol just to read its current Supertrend trend direction,
+// used only for the "1H: BULL/BEAR" header pill next to the 4H chart.
+async function fetch1hTrendLabel(sym){
+  try{
+    const creds = getCreds();
+    if(!creds) return null;
+    const end = new Date();
+    const start = new Date(end.getTime() - 20*24*60*60*1000);
+    const barsMap = await fetchChunk([sym], fmtDate(start), fmtDate(end), creds, '1Hour');
+    const bars = barsMap[sym];
+    if(!bars || bars.length < 30) return null;
+    const ind = computeSupertrendCloud(bars, BUY4H_ATR_LEN, BUY4H_ATR_MULT);
+    if(!ind) return null;
+    return ind.trend[ind.trend.length-1] === 1 ? 'bull' : 'bear';
+  }catch(e){ return null; }
 }
 
 const liveCharts = { h: null, d: null };
