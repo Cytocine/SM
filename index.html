@@ -306,6 +306,14 @@
     padding:2px 7px; border-radius:5px; background:var(--panel-2);
     border:1px solid var(--border); white-space:nowrap; color:var(--muted);
   }
+  .st-badge{
+    font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700;
+    padding:1px 6px; border-radius:4px; display:inline-block; white-space:nowrap;
+    background:var(--panel-2); border:1px solid var(--border); color:var(--muted);
+  }
+  .st-badge.bull{color:var(--up); background:rgba(52,211,153,0.1); border-color:rgba(52,211,153,0.35);}
+  .st-badge.bear{color:var(--down); background:rgba(248,113,113,0.1); border-color:rgba(248,113,113,0.35);}
+  .st-badge.na{opacity:0.5;}
   .lwc-price{width:100%; height:190px; border-radius:6px; overflow:hidden;}
   .lwc-lower{width:100%; height:64px; margin-top:3px; border-radius:6px; overflow:hidden;}
 
@@ -506,10 +514,12 @@
               <th data-key="m3">3M <span class="arrow"></span></th>
               <th data-key="m6">6M <span class="arrow"></span></th>
               <th data-key="ytd">YTD <span class="arrow"></span></th>
+              <th class="spark-col" title="Supertrend trend direction on 1-hour candles (individual stocks only, computed when a sector is expanded)">ST 1H</th>
+              <th class="spark-col" title="Supertrend trend direction on 4-hour candles (individual stocks only, computed when a sector is expanded)">ST 4H</th>
             </tr>
           </thead>
           <tbody id="tbody">
-            <tr><td colspan="9">
+            <tr><td colspan="11">
               <div class="loading-state">
                 <div class="pulse-dot" style="position:static;"></div>
                 Loading market data from Alpaca...
@@ -1867,6 +1877,57 @@ async function fetchTrendLabel(sym, timeframe){
 async function fetch1hTrendLabel(sym){ return fetchTrendLabel(sym, '1Hour'); }
 async function fetchDailyTrendLabel(sym){ return fetchTrendLabel(sym, '1Day'); }
 
+// ============================================================
+// Per-stock Supertrend trend badges (1H / 4H) shown on the individual
+// ticker sub-rows in the sector Table View. Lazily fetched — only for
+// symbols actually visible once a sector group is expanded — batched into
+// one API call per timeframe per group (like the 4H Buy Scan does), and
+// cached in memory for the session (fetchBarsSmart also caches to
+// IndexedDB, so repeat expands of the same group are cheap too).
+// ============================================================
+const stTrendCache = { '1Hour': {}, '4Hour': {} }; // sym -> 'bull' | 'bear' | 'na'
+const stTrendGroupInFlight = { '1Hour': new Set(), '4Hour': new Set() };
+
+async function ensureGroupStTrends(symList){
+  for(const timeframe of ['1Hour','4Hour']){
+    const pending = symList.filter(sym => stTrendCache[timeframe][sym] === undefined && !stTrendGroupInFlight[timeframe].has(sym));
+    if(!pending.length) continue;
+    pending.forEach(s => stTrendGroupInFlight[timeframe].add(s));
+    const creds = getCreds();
+    if(!creds || !creds.key){
+      pending.forEach(s => stTrendCache[timeframe][s] = 'na');
+      pending.forEach(s => stTrendGroupInFlight[timeframe].delete(s));
+      continue;
+    }
+    const lookbackDays = timeframe === '1Hour' ? 30 : 60;
+    try{
+      const barsMap = await fetchBarsSmart(pending, timeframe, lookbackDays, creds);
+      for(const sym of pending){
+        const bars = barsMap[sym] || [];
+        let label = 'na';
+        if(bars.length >= 30){
+          const ind = computeSupertrendCloud(bars, BUY4H_ATR_LEN, BUY4H_ATR_MULT);
+          if(ind) label = ind.trend[ind.trend.length-1] === 1 ? 'bull' : 'bear';
+        }
+        stTrendCache[timeframe][sym] = label;
+      }
+    }catch(e){
+      pending.forEach(s => stTrendCache[timeframe][s] = 'na');
+    }finally{
+      pending.forEach(s => stTrendGroupInFlight[timeframe].delete(s));
+      if(activeView === 'table') renderTable();
+    }
+  }
+}
+
+function stBadgeHtml(sym, timeframe, label){
+  const short = timeframe === '1Hour' ? '1H' : '4H';
+  if(label === undefined) return `<span class="st-badge na" title="Loading ${short} Supertrend…">···</span>`;
+  if(label === 'na') return `<span class="st-badge na" title="Not enough ${short} bar history">—</span>`;
+  const isBull = label === 'bull';
+  return `<span class="st-badge ${isBull?'bull':'bear'}" title="${short} Supertrend: ${isBull?'Bullish':'Bearish'}">${isBull?'▲':'▼'}</span>`;
+}
+
 const liveCharts = { h: null, d: null };
 function destroyLiveCharts(){
   ['h','d'].forEach(key => {
@@ -2259,7 +2320,7 @@ function renderTable(){
 
   if(!entries.length){
     destroyLiveCharts();
-    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state">No matching results found for this scan.</div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="11"><div class="empty-state">No matching results found for this scan.</div></td></tr>`;
     return;
   }
 
@@ -2286,6 +2347,8 @@ function renderTable(){
       <td>${pctSpan(d.m3)}</td>
       <td>${pctSpan(d.m6)}</td>
       <td>${pctSpan(d.ytd)}</td>
+      <td class="mono" style="color:var(--muted); font-size:10px;">—</td>
+      <td class="mono" style="color:var(--muted); font-size:10px;">—</td>
     </tr>`;
 
     if(isOpen){
@@ -2296,6 +2359,7 @@ function renderTable(){
       const inCart = watchlistCart.has(activeSym);
 
       if(!barsBySymbol1H[activeSym] && !hourlyFetchInFlight.has(activeSym)) ensureHourlyBars(activeSym);
+      ensureGroupStTrends(symList);
       chartPanelState = {
         activeSym,
         mountHourly: !!(barsBySymbol1H[activeSym] && barsBySymbol1H[activeSym].length >= 40),
@@ -2304,7 +2368,7 @@ function renderTable(){
         dailyBars: barsBySymbol[activeSym]
       };
 
-      const chartPanelHtml = `<tr class="chart-row"><td colspan="9">
+      const chartPanelHtml = `<tr class="chart-row"><td colspan="11">
         <div class="chart-panel">
           <div class="chart-panel-head">
             <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
@@ -2355,6 +2419,8 @@ function renderTable(){
           <td>${pctSpan(r.m3)}</td>
           <td>${pctSpan(r.m6)}</td>
           <td>${pctSpan(r.ytd)}</td>
+          <td>${stBadgeHtml(sym, '1Hour', stTrendCache['1Hour'][sym])}</td>
+          <td>${stBadgeHtml(sym, '4Hour', stTrendCache['4Hour'][sym])}</td>
         </tr>`;
         if(sym === activeSym){
           html += chartPanelHtml;
@@ -2989,7 +3055,7 @@ async function loadAll(forceRefresh=false){
     else if(activeView === 'nearema') renderNearEmaGrid();
     else renderHeatMap();
   }catch(err){
-    document.getElementById('tbody').innerHTML = `<tr><td colspan="9"><div class="empty-state">Error: ${(err.message||'Failed loading data')}</div></td></tr>`;
+    document.getElementById('tbody').innerHTML = `<tr><td colspan="11"><div class="empty-state">Error: ${(err.message||'Failed loading data')}</div></td></tr>`;
   }finally{
     syncBtn.classList.remove('spinning');
   }
