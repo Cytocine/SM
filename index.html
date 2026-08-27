@@ -187,6 +187,12 @@
   .tc-toolbar{position:absolute; left:8px; top:8px; bottom:8px; width:28px; display:flex; flex-direction:column; align-items:center; gap:8px; padding-top:2px;}
   .tc-toolbar .tc-tool{width:26px; height:26px; border-radius:6px; display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:12px; background:transparent;}
   .tc-toolbar .tc-tool.active{background:rgba(45,212,191,0.18); color:var(--accent);}
+  .tc-sizer{border:1px solid var(--border); border-top:none; border-radius:0 0 10px 10px; background:#0d1219; padding:10px 12px; display:flex; flex-wrap:wrap; align-items:center; gap:16px;}
+  .tc-sizer-row{display:flex; gap:14px; flex-wrap:wrap;}
+  .tc-sizer-row label{font-size:11px; color:var(--muted); display:flex; align-items:center; gap:6px;}
+  .tc-sizer-input{width:80px; background:#131a24; border:1px solid var(--border); border-radius:6px; color:var(--text); font-family:'JetBrains Mono',monospace; font-size:12px; padding:5px 7px;}
+  .tc-sizer-out{font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text); display:flex; gap:16px; flex-wrap:wrap;}
+  .tc-sizer-out b{color:var(--accent);}
   tr.buy4h-row{cursor:pointer; transition:background .12s;}
   tr.buy4h-row:hover td{background:var(--panel-2);}
   tr.buy4h-row.selected td{background:var(--accent-dim);}
@@ -750,23 +756,90 @@ function getDB(){
     req.onerror = () => reject(req.error);
   });
 }
-async function getCachedBars(){
+async function getCachedSymbolBars(timeframe, sym){
   try{
     const db = await getDB();
     return new Promise((resolve)=>{
       const tx = db.transaction(STORE_NAME, 'readonly');
-      const req = tx.objectStore(STORE_NAME).get('dailyBars');
+      const req = tx.objectStore(STORE_NAME).get(`bars:${timeframe}:${sym}`);
       req.onsuccess = () => resolve(req.result || null);
       req.onerror = () => resolve(null);
     });
   }catch(e){ return null; }
 }
-async function setCachedBars(data){
+async function setCachedSymbolBars(timeframe, sym, bars){
   try{
     const db = await getDB();
     const tx = db.transaction(STORE_NAME, 'readwrite');
-    tx.objectStore(STORE_NAME).put({ timestamp: Date.now(), data }, 'dailyBars');
+    tx.objectStore(STORE_NAME).put({ bars, updatedAt: Date.now() }, `bars:${timeframe}:${sym}`);
   }catch(e){}
+}
+
+// Cached bars can have a couple of days re-requested on top of "new since last fetch" —
+// cheap insurance against a partially-formed last bar or a feed gap; duplicates get
+// de-duped on merge, so this costs a little bandwidth but never costs correctness.
+const BAR_CACHE_OVERLAP_MS = 2 * 24 * 60 * 60 * 1000;
+
+function mergeAndTrimBars(oldBars, newBars, cutoffMs){
+  const map = new Map();
+  for(const b of (oldBars||[])) map.set(b.t, b);
+  for(const b of (newBars||[])) map.set(b.t, b); // freshly fetched bar wins over a stale duplicate
+  return Array.from(map.values())
+    .filter(b => new Date(b.t).getTime() >= cutoffMs)
+    .sort((a,b) => new Date(a.t) - new Date(b.t));
+}
+
+// Fetches bars for `symbols` on `timeframe` going back `lookbackDays`, using the
+// per-symbol IndexedDB cache so repeat calls only download bars newer than what's
+// already stored. Pass force=true (the manual Sync button) to ignore the cache and
+// pull the full lookback window fresh for every symbol.
+async function fetchBarsSmart(symbols, timeframe, lookbackDays, creds, force=false){
+  const now = new Date();
+  const cutoffMs = now.getTime() - lookbackDays*24*60*60*1000;
+  const result = {};
+  const cachedBySym = {};
+
+  if(!force){
+    await Promise.all(symbols.map(async sym=>{
+      cachedBySym[sym] = await getCachedSymbolBars(timeframe, sym);
+    }));
+  }
+
+  const noCache = symbols.filter(s => !cachedBySym[s] || !cachedBySym[s].bars || !cachedBySym[s].bars.length);
+  const hasCache = symbols.filter(s => !noCache.includes(s));
+  const chunkSize = 40;
+
+  for(let i=0;i<noCache.length;i+=chunkSize){
+    const chunk = noCache.slice(i, i+chunkSize);
+    const barsMap = await fetchChunk(chunk, fmtDate(new Date(cutoffMs)), fmtDate(now), creds, timeframe);
+    for(const sym of chunk){
+      const merged = mergeAndTrimBars(null, barsMap[sym] || [], cutoffMs);
+      result[sym] = merged;
+      setCachedSymbolBars(timeframe, sym, merged);
+    }
+  }
+
+  for(let i=0;i<hasCache.length;i+=chunkSize){
+    const chunk = hasCache.slice(i, i+chunkSize);
+    // Batch by the earliest last-cached bar in the group so every symbol gets fully
+    // topped up in one call — some symbols get a few already-cached bars re-sent,
+    // which just get de-duped on merge, but it avoids one API call per symbol.
+    let earliestLast = now.getTime();
+    for(const sym of chunk){
+      const bars = cachedBySym[sym].bars;
+      const lastT = new Date(bars[bars.length-1].t).getTime();
+      if(lastT < earliestLast) earliestLast = lastT;
+    }
+    const startMs = Math.max(cutoffMs, earliestLast - BAR_CACHE_OVERLAP_MS);
+    const barsMap = await fetchChunk(chunk, fmtDate(new Date(startMs)), fmtDate(now), creds, timeframe);
+    for(const sym of chunk){
+      const merged = mergeAndTrimBars(cachedBySym[sym].bars, barsMap[sym] || [], cutoffMs);
+      result[sym] = merged;
+      setCachedSymbolBars(timeframe, sym, merged);
+    }
+  }
+
+  return result;
 }
 
 function getCreds(){
@@ -993,26 +1066,8 @@ async function fetchChunk(symbols, start, end, creds, timeframe='1Day'){
 }
 
 async function fetchAllBars(force=false){
-  if(!force){
-    const cached = await getCachedBars();
-    if(cached && (Date.now() - cached.timestamp < 3 * 3600 * 1000)){
-      return cached.data;
-    }
-  }
   const creds = getCreds();
-  const end = new Date(), start = new Date();
-  start.setFullYear(start.getFullYear() - 1);
-  start.setDate(start.getDate() - 20);
-  const startStr = fmtDate(start), endStr = fmtDate(end);
-
-  const chunkSize = 40, results = {};
-  for(let i=0;i<ALL_SYMBOLS.length;i+=chunkSize){
-    const chunk = ALL_SYMBOLS.slice(i, i+chunkSize);
-    const bars = await fetchChunk(chunk, startStr, endStr, creds);
-    Object.assign(results, bars);
-  }
-  await setCachedBars(results);
-  return results;
+  return await fetchBarsSmart(ALL_SYMBOLS, '1Day', 385, creds, force);
 }
 
 // 1H Bars
@@ -1026,10 +1081,8 @@ async function ensureHourlyBars(symbol, triggerRender=true){
   hourlyFetchFailed.delete(symbol);
   try{
     const creds = getCreds();
-    const end = new Date(), start = new Date();
-    start.setDate(start.getDate() - 30);
-    const bars = await fetchChunk([symbol], fmtDate(start), fmtDate(end), creds, '1Hour');
-    barsBySymbol1H[symbol] = bars[symbol] || [];
+    const barsMap = await fetchBarsSmart([symbol], '1Hour', 30, creds);
+    barsBySymbol1H[symbol] = barsMap[symbol] || [];
   }catch(e){
     hourlyFetchFailed.add(symbol);
   }finally{
@@ -1133,6 +1186,8 @@ const BUY4H_DIST_CHASE_PCT = 1.5; // % distance from Supertrend line where an en
 let barsBySymbol4H = {}; // full 4H bar history for scan hits, cached so the chart can render without refetching
 let expandedBuy4hSym = null;
 let buy4hHideChaseRisk = false;
+let buy4hSizerAccount = parseFloat(localStorage.getItem('sp_sizer_account')) || 10000;
+let buy4hSizerRiskPct = parseFloat(localStorage.getItem('sp_sizer_risk_pct')) || 1;
 
 function buy4hChaseRisk(barsAgo, distPct){
   const d = Math.abs(distPct);
@@ -1234,14 +1289,10 @@ async function runBuy4hScan(){
   const bar = document.getElementById('buy4hProgressBar');
   const originalStatusText = statusEl.textContent;
   btn.disabled = true; btn.textContent = 'Scanning…';
-  statusEl.textContent = 'Fetching 4H bars from Alpaca…';
+  statusEl.textContent = 'Fetching 4H bars (cached bars reused, only new candles downloaded)…';
   bar.style.width = '2%';
 
   const creds = getCreds();
-  const end = new Date(), start = new Date();
-  start.setDate(start.getDate() - 200); // enough 4H history for the 80-bar linreg + EMA34-ish warmup
-  const startStr = fmtDate(start), endStr = fmtDate(end);
-
   const results = [];
   const chunkSize = 30;
   let done = 0;
@@ -1249,7 +1300,9 @@ async function runBuy4hScan(){
     for(let i=0;i<ALL_SYMBOLS.length;i+=chunkSize){
       const chunk = ALL_SYMBOLS.slice(i, i+chunkSize);
       try{
-        const barsMap = await fetchChunk(chunk, startStr, endStr, creds, '4Hour');
+        // 200 days of 4H history is enough for the 80-bar linreg + EMA34-ish warmup;
+        // fetchBarsSmart only actually downloads what's missing since the last scan.
+        const barsMap = await fetchBarsSmart(chunk, '4Hour', 200, creds);
         for(const sym of chunk){
           const bars = barsMap[sym] || [];
           if(bars.length < 40) continue;
@@ -1268,6 +1321,7 @@ async function runBuy4hScan(){
               sector: TICKER_SECTOR[sym] || 'General',
               price,
               entryPrice: bars[flipIdx].c,
+              stopPrice: st,
               barsAgo: sig.barsAgo,
               distPct,
               chaseRisk: buy4hChaseRisk(sig.barsAgo, distPct),
@@ -1319,6 +1373,8 @@ function renderBuy4hScan(){
         <span class="tc-chg" style="color:${r.distPct>=0?'#0ebb23':'#ff5c6c'}">${r.distPct>=0?'+':''}${r.distPct.toFixed(2)}%</span>
         <span class="tc-pill bull" id="buy4hPill1h_${r.symbol}">1H: …</span>
         <span class="tc-pill bull">4H: BULL</span>
+        <span class="tc-pill bull" id="buy4hPillD_${r.symbol}">D: …</span>
+        <span class="tc-pill" id="buy4hAlign_${r.symbol}">Alignment: …</span>
         <span class="tc-pill entry">Entry: $${r.entryPrice.toFixed(2)}</span>
         <span class="badge chase-${r.chaseRisk}">Chase: ${CHASE_RISK_LABEL[r.chaseRisk]}</span>
       </div>
@@ -1330,6 +1386,13 @@ function renderBuy4hScan(){
           <span class="tc-tool">🗑</span>
         </div>
         <div class="lwc-price" id="buy4hChartEl" style="height:260px;"></div>
+      </div>
+      <div class="tc-sizer" id="buy4hSizer_${r.symbol}">
+        <div class="tc-sizer-row">
+          <label>Account $ <input type="number" class="tc-sizer-input" id="buy4hSizerAcct" value="${buy4hSizerAccount}" min="0" step="100"></label>
+          <label>Risk % <input type="number" class="tc-sizer-input" id="buy4hSizerRisk" value="${buy4hSizerRiskPct}" min="0.1" step="0.1"></label>
+        </div>
+        <div class="tc-sizer-out" id="buy4hSizerOut_${r.symbol}"></div>
       </div>
     </div>
   </td></tr>`;
@@ -1351,15 +1414,50 @@ function renderBuy4hScan(){
   tbody.innerHTML = html;
 
   if(expandedBuy4hSym){
+    const r = list.find(x => x.symbol === expandedBuy4hSym);
     const bars = barsBySymbol4H[expandedBuy4hSym];
     if(bars && bars.length >= 40) buy4hChart = mountBuy4hChart('buy4hChartEl', bars);
-    fetch1hTrendLabel(expandedBuy4hSym).then(label=>{
-      const pill = document.getElementById(`buy4hPill1h_${expandedBuy4hSym}`);
-      if(!pill) return; // panel may have closed/changed before this resolved
-      if(!label){ pill.textContent = '1H: n/a'; pill.className = 'tc-pill'; return; }
-      pill.textContent = `1H: ${label.toUpperCase()}`;
-      pill.className = `tc-pill ${label}`;
+
+    Promise.all([fetch1hTrendLabel(expandedBuy4hSym), fetchDailyTrendLabel(expandedBuy4hSym)]).then(([h1, d1])=>{
+      const pill1h = document.getElementById(`buy4hPill1h_${expandedBuy4hSym}`);
+      const pillD = document.getElementById(`buy4hPillD_${expandedBuy4hSym}`);
+      const alignEl = document.getElementById(`buy4hAlign_${expandedBuy4hSym}`);
+      if(!pill1h || !pillD || !alignEl) return; // panel closed/changed before this resolved
+      const setPill = (el, label, prefix) => {
+        if(!label){ el.textContent = `${prefix}: n/a`; el.className = 'tc-pill'; return; }
+        el.textContent = `${prefix}: ${label.toUpperCase()}`;
+        el.className = `tc-pill ${label}`;
+      };
+      setPill(pill1h, h1, '1H');
+      setPill(pillD, d1, 'D');
+      const bullCount = 1 + (h1==='bull'?1:0) + (d1==='bull'?1:0); // 4H leg is always bull for a BUY hit
+      const known = 1 + (h1?1:0) + (d1?1:0);
+      alignEl.textContent = `Alignment: ${bullCount}/${known}`;
+      alignEl.className = `tc-pill ${bullCount===known && known===3 ? 'bull' : (bullCount<known ? 'bear' : '')}`;
     });
+
+    if(r){
+      const updateSizer = () => {
+        const acctInput = document.getElementById('buy4hSizerAcct');
+        const riskInput = document.getElementById('buy4hSizerRisk');
+        const out = document.getElementById(`buy4hSizerOut_${r.symbol}`);
+        if(!acctInput || !riskInput || !out) return;
+        const account = parseFloat(acctInput.value) || 0;
+        const riskPct = parseFloat(riskInput.value) || 0;
+        buy4hSizerAccount = account; buy4hSizerRiskPct = riskPct;
+        localStorage.setItem('sp_sizer_account', account);
+        localStorage.setItem('sp_sizer_risk_pct', riskPct);
+        const riskAmount = account * (riskPct/100);
+        const stopDistance = r.entryPrice - r.stopPrice;
+        if(stopDistance <= 0){ out.innerHTML = `<span style="color:var(--muted)">Stop is above entry — can't size this one.</span>`; return; }
+        const shares = Math.floor(riskAmount / stopDistance);
+        const positionValue = shares * r.entryPrice;
+        out.innerHTML = `Risk $<b>${riskAmount.toFixed(2)}</b> ÷ stop dist $${stopDistance.toFixed(2)} → <b>${shares}</b> shares · position ≈ $<b>${positionValue.toFixed(2)}</b>`;
+      };
+      updateSizer();
+      document.getElementById('buy4hSizerAcct').addEventListener('input', updateSizer);
+      document.getElementById('buy4hSizerRisk').addEventListener('input', updateSizer);
+    }
   }
 
   tbody.querySelectorAll('tr.buy4h-row').forEach(row=>{
@@ -1751,15 +1849,14 @@ function mountBuy4hChart(elId, bars, displayLimit=60){
   return chart;
 }
 
-// Fetches 1H bars for a symbol just to read its current Supertrend trend direction,
-// used only for the "1H: BULL/BEAR" header pill next to the 4H chart.
-async function fetch1hTrendLabel(sym){
+// Fetches bars for a symbol on a given timeframe just to read its current Supertrend
+// trend direction, used for the header alignment pills (1H / 4H / Daily).
+async function fetchTrendLabel(sym, timeframe){
   try{
     const creds = getCreds();
     if(!creds) return null;
-    const end = new Date();
-    const start = new Date(end.getTime() - 20*24*60*60*1000);
-    const barsMap = await fetchChunk([sym], fmtDate(start), fmtDate(end), creds, '1Hour');
+    const lookbackDays = timeframe === '1Day' ? 400 : (timeframe === '1Hour' ? 30 : 60);
+    const barsMap = await fetchBarsSmart([sym], timeframe, lookbackDays, creds);
     const bars = barsMap[sym];
     if(!bars || bars.length < 30) return null;
     const ind = computeSupertrendCloud(bars, BUY4H_ATR_LEN, BUY4H_ATR_MULT);
@@ -1767,6 +1864,8 @@ async function fetch1hTrendLabel(sym){
     return ind.trend[ind.trend.length-1] === 1 ? 'bull' : 'bear';
   }catch(e){ return null; }
 }
+async function fetch1hTrendLabel(sym){ return fetchTrendLabel(sym, '1Hour'); }
+async function fetchDailyTrendLabel(sym){ return fetchTrendLabel(sym, '1Day'); }
 
 const liveCharts = { h: null, d: null };
 function destroyLiveCharts(){
