@@ -92,7 +92,7 @@
   .icon-btn:hover{color:var(--text); border-color:var(--accent);}
   .icon-btn.spinning svg{animation:spin 0.8s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg);}}
-  
+
   .view-switch{
     display:inline-flex; background:var(--panel-2); border:1px solid var(--border); border-radius:8px; padding:2px;
   }
@@ -135,7 +135,7 @@
     background:var(--panel); border:1px solid var(--border); border-radius:var(--radius);
     overflow:hidden;
   }
-  .scroll-region{overflow-x:auto;}
+  .scroll-region{overflow-x:auto; -webkit-overflow-scrolling:touch;}
   table{width:100%; border-collapse:collapse; min-width:860px;}
   thead th{
     position:sticky; top:0;
@@ -246,7 +246,7 @@
   }
   .hm-head{display:flex; justify-content:space-between; align-items:center;}
   .hm-title{font-weight:700; font-size:13px; display:flex; align-items:center; gap:6px;}
-  .hm-tiles{display:grid; grid-template-columns:repeat(auto-fill, minmax(68px, 1fr)); gap:6px;}
+  .hm-tiles{display:grid; grid-template-columns:repeat(auto-fill, minmax(78px, 1fr)); gap:6px;}
   .hm-tile{
     border-radius:6px; padding:7px 4px; text-align:center; font-family:'JetBrains Mono',monospace;
     font-size:11px; font-weight:600; cursor:pointer; transition:transform 0.1s, filter 0.1s;
@@ -258,6 +258,37 @@
   .hm-tile.hit{box-shadow:0 0 0 1.5px var(--accent);}
   .hm-tile.in-cart::after{
     content:'★'; position:absolute; top:2px; right:3px; font-size:8px; color:var(--amber);
+  }
+
+  /* Supertrend Badges on Heatmap Tiles */
+  .hm-tile-tfs {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 3px;
+    margin-top: 4px;
+  }
+  .tf-badge {
+    font-size: 10px;
+    line-height: 1;
+    padding: 1px 3px;
+    border-radius: 3px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    text-transform: uppercase;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--muted);
+  }
+  .tf-badge.bull {
+    background: rgba(131, 120, 232, 0.8);
+    border-color: rgba(52, 211, 153, 0.6);
+    color: #a7f3d0;
+  }
+  .tf-badge.bear {
+    background: rgba(245, 139, 222, 0.8);
+    border-color: rgba(248, 113, 113, 0.6);
+    color: #fecaca;
   }
 
   /* Above EMA34 */
@@ -306,14 +337,6 @@
     padding:2px 7px; border-radius:5px; background:var(--panel-2);
     border:1px solid var(--border); white-space:nowrap; color:var(--muted);
   }
-  .st-badge{
-    font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700;
-    padding:1px 6px; border-radius:4px; display:inline-block; white-space:nowrap;
-    background:var(--panel-2); border:1px solid var(--border); color:var(--muted);
-  }
-  .st-badge.bull{color:var(--up); background:rgba(52,211,153,0.1); border-color:rgba(52,211,153,0.35);}
-  .st-badge.bear{color:var(--down); background:rgba(248,113,113,0.1); border-color:rgba(248,113,113,0.35);}
-  .st-badge.na{opacity:0.5;}
   .lwc-price{width:100%; height:190px; border-radius:6px; overflow:hidden;}
   .lwc-lower{width:100%; height:64px; margin-top:3px; border-radius:6px; overflow:hidden;}
 
@@ -360,7 +383,7 @@
   }
   .ai-output-container th{background:var(--panel); color:var(--muted); text-transform:uppercase; font-size:11px;}
   .ai-output-container td strong{color:var(--accent);}
-  
+
   /* Color-Coded Badges */
   .badge-tag{
     display:inline-block; font-weight:700; padding:2px 8px; border-radius:4px; font-size:11px; font-family:'JetBrains Mono',monospace;
@@ -421,7 +444,7 @@
     td{ padding:8px 10px; font-size:12px; }
     tr.sub-row td{ padding:6px 10px 6px 22px; }
 
-    /* Chart panel: shorter charts, single column already handled by flex-wrap */
+    /* Chart panel */
     .lwc-price{ height:150px; }
     .lwc-lower{ height:48px; }
     .chart-tf-block{ min-width:100%; }
@@ -431,10 +454,36 @@
     .mini-chart-box{ height:140px; }
 
     /* Modals */
-    .modal{ padding:16px; max-height:calc(100vh - 32px); overflow-y:auto; }
+    .modal{ padding:16px; max-height:calc(100vh - 32px); overflow-y:auto; -webkit-overflow-scrolling:touch; }
     .modal.modal-lg{ max-height:calc(100vh - 32px); }
     .ai-output-container table{ min-width:560px; font-size:11px; }
     .ai-output-container th, .ai-output-container td{ padding:6px 8px; font-size:11px; }
+
+    /* Prevent iOS Safari auto-zoom on focus (any input/select under 16px triggers it) */
+    .search-wrap input, .field input, .field select,
+    .tc-sizer-input, .hm-sort-group select, #nearEmaThreshold,
+    #geminiKeyInput{ font-size:16px; }
+    .field input, .field select{ padding:10px 11px; }
+    .tc-sizer-input{ width:92px; padding:6px 8px; }
+
+    /* Grids: avoid overflow on narrow phones (iPhone SE etc, ~320-360px wide) */
+    main{ padding:12px; }
+    .heatmap-grid{ grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:10px; }
+    .multi-chart-grid{ grid-template-columns:1fr; gap:10px; }
+    .hm-tiles{ grid-template-columns:repeat(auto-fill, minmax(66px, 1fr)); }
+
+    /* Slightly larger touch targets */
+    .icon-btn{ width:40px; height:40px; }
+    .chart-nav-btn{ min-width:36px; min-height:36px; }
+    .cart-btn{ padding:8px; font-size:16px; }
+  }
+
+  /* Extra-narrow phones */
+  @media (max-width:380px){
+    main{ padding:8px; }
+    .header-inner{ padding:8px; }
+    .brand{ font-size:13px; }
+    table{ min-width:580px; }
   }
 </style>
 </head>
@@ -443,7 +492,7 @@
 <header>
   <div class="header-inner">
     <div class="brand"><span class="pulse-dot"></span>Sector Pulse</div>
-    
+
     <div class="view-switch">
       <button class="view-tab active" id="tabTable">Table View</button>
       <button class="view-tab" id="tabBullish">🔥 Most Bullish Today</button>
@@ -514,12 +563,10 @@
               <th data-key="m3">3M <span class="arrow"></span></th>
               <th data-key="m6">6M <span class="arrow"></span></th>
               <th data-key="ytd">YTD <span class="arrow"></span></th>
-              <th class="spark-col" title="Supertrend trend direction on 1-hour candles (individual stocks only, computed when a sector is expanded)">ST 1H</th>
-              <th class="spark-col" title="Supertrend trend direction on 4-hour candles (individual stocks only, computed when a sector is expanded)">ST 4H</th>
             </tr>
           </thead>
           <tbody id="tbody">
-            <tr><td colspan="11">
+            <tr><td colspan="9">
               <div class="loading-state">
                 <div class="pulse-dot" style="position:static;"></div>
                 Loading market data from Alpaca...
@@ -642,10 +689,10 @@
         <button class="btn" id="closeAiModal" style="flex:none; width:auto; padding:5px 12px; font-size:11px;">✕ Close</button>
       </div>
     </div>
-    
+
     <div style="display:flex; gap:10px; align-items:center; margin-bottom:10px; flex-wrap:wrap;">
-      <input type="password" id="geminiKeyInput" placeholder="Enter Gemini API Key (saved automatically)" class="mono" style="flex:1; min-width:220px; background:var(--panel-2); border:1px solid var(--border); color:var(--text); padding:8px; border-radius:6px; font-size:12px;">
-      
+      <input type="password" id="geminiKeyInput" placeholder="Enter Gemini API Key (saved automatically)" class="mono" style="flex:1; min-width:220px; background:var(--panel-2); border:1px solid var(--border); color:var(--text); padding:8px; border-radius:6px; font-size:16px;">
+
       <!-- Grounding Toggle -->
       <label class="mono" style="font-size:11px; color:var(--muted); display:flex; align-items:center; gap:6px; cursor:pointer;" title="Grounding searches web/news. Leave unchecked on Free Tier to avoid quota exhaustion.">
         <input type="checkbox" id="enableSearchToggle" style="cursor:pointer;">
@@ -706,7 +753,7 @@ FIS:'Financials',FISV:'Financials',
 PANW:'Cybersecurity',CRWD:'Cybersecurity',ZS:'Cybersecurity',FTNT:'Cybersecurity',OKTA:'Cybersecurity',S:'Cybersecurity',
 COIN:'Crypto',HOOD:'Crypto',MSTR:'Crypto',MARA:'Crypto',RIOT:'Crypto',CLSK:'Crypto',BMNR:'Crypto',
 CCJ:'Nuclear',SMR:'Nuclear',OKLO:'Nuclear',LEU:'Nuclear',VST:'Nuclear',CEG:'Nuclear',NNE:'Nuclear',
-TLRY:'Cannabis',CGC:'Cannabis',ACB:'Cannabis',CRON:'Cannabis',SNDL:'Cannabis',GTBIF:'Cannabis',CURLF:'Cannabis',TCNNF:'Cannabis',IONQ:'Quantum',RGTI:'Quantum',QBTS:'Quantum',QUBT:'Quantum',ARQQ:'Quantum',  
+TLRY:'Cannabis',CGC:'Cannabis',ACB:'Cannabis',CRON:'Cannabis',SNDL:'Cannabis',GTBIF:'Cannabis',CURLF:'Cannabis',TCNNF:'Cannabis',IONQ:'Quantum',RGTI:'Quantum',QBTS:'Quantum',QUBT:'Quantum',ARQQ:'Quantum',
 DHI:'Homebuilders',LEN:'Homebuilders',PHM:'Homebuilders',NVR:'Homebuilders',KBH:'Homebuilders',MTH:'Homebuilders',
 GOOGL:'Comm Services',GOOG:'Comm Services',META:'Comm Services',T:'Comm Services',VZ:'Comm Services',TMUS:'Comm Services',NFLX:'Comm Services',DIS:'Comm Services',WBD:'Comm Services',
 EA:'Comm Services',TTWO:'Comm Services',RBLX:'Comm Services',CHTR:'Comm Services',CMCSA:'Comm Services',DJT:'Comm Services',IQ:'Comm Services',LYV:'Comm Services',PINS:'Comm Services',PSKY:'Comm Services',ROKU:'Comm Services',SATS:'Comm Services',SNAP:'Comm Services',TTD:'Comm Services',
@@ -739,13 +786,13 @@ const ALL_SYMBOLS = Object.keys(TICKER_SECTOR);
 // State
 let sortKey = "m1", sortDir = -1;
 let bSortKey = "swingScore", bSortDir = -1;
-let barsBySymbol = {};      
-let groupData = {};         
+let barsBySymbol = {};
+let groupData = {};
 let symReturns = {};
 let expandedGroup = null;
 let expandedBullishSym = null;
-let scannerTurnFilter = false; 
-let newTurnFilter = false; // when true, table view only shows sectors that just turned bullish (within NEW_TURN_WINDOW days)
+let scannerTurnFilter = false;
+let newTurnFilter = false;
 let activeView = 'table';
 let selectedSymbol = null;
 let hmMetric = 'm1';
@@ -755,6 +802,9 @@ let isPlayingSectors = false;
 let sectorPlayTimer = null;
 let isPlayingStocks = false;
 let stockPlayTimer = null;
+
+// Trend cache for heatmap 1H / 4H badges
+const heatmapTrendCache = {};
 
 // IndexedDB
 const DB_NAME = 'SectorPulseDB', STORE_NAME = 'barsCache';
@@ -785,24 +835,17 @@ async function setCachedSymbolBars(timeframe, sym, bars){
   }catch(e){}
 }
 
-// Cached bars can have a couple of days re-requested on top of "new since last fetch" —
-// cheap insurance against a partially-formed last bar or a feed gap; duplicates get
-// de-duped on merge, so this costs a little bandwidth but never costs correctness.
 const BAR_CACHE_OVERLAP_MS = 2 * 24 * 60 * 60 * 1000;
 
 function mergeAndTrimBars(oldBars, newBars, cutoffMs){
   const map = new Map();
   for(const b of (oldBars||[])) map.set(b.t, b);
-  for(const b of (newBars||[])) map.set(b.t, b); // freshly fetched bar wins over a stale duplicate
+  for(const b of (newBars||[])) map.set(b.t, b);
   return Array.from(map.values())
     .filter(b => new Date(b.t).getTime() >= cutoffMs)
     .sort((a,b) => new Date(a.t) - new Date(b.t));
 }
 
-// Fetches bars for `symbols` on `timeframe` going back `lookbackDays`, using the
-// per-symbol IndexedDB cache so repeat calls only download bars newer than what's
-// already stored. Pass force=true (the manual Sync button) to ignore the cache and
-// pull the full lookback window fresh for every symbol.
 async function fetchBarsSmart(symbols, timeframe, lookbackDays, creds, force=false){
   const now = new Date();
   const cutoffMs = now.getTime() - lookbackDays*24*60*60*1000;
@@ -831,9 +874,6 @@ async function fetchBarsSmart(symbols, timeframe, lookbackDays, creds, force=fal
 
   for(let i=0;i<hasCache.length;i+=chunkSize){
     const chunk = hasCache.slice(i, i+chunkSize);
-    // Batch by the earliest last-cached bar in the group so every symbol gets fully
-    // topped up in one call — some symbols get a few already-cached bars re-sent,
-    // which just get de-duped on merge, but it avoids one API call per symbol.
     let earliestLast = now.getTime();
     for(const sym of chunk){
       const bars = cachedBySym[sym].bars;
@@ -934,12 +974,10 @@ document.getElementById('analyzeCartBtn').addEventListener('click', ()=>{
 document.getElementById('closeAiModal').addEventListener('click', ()=> aiOverlay.classList.remove('open'));
 document.getElementById('reRunAiBtn').addEventListener('click', runCartAiAnalysis);
 
-// Auto-save key on blur/input
 document.getElementById('geminiKeyInput').addEventListener('input', (e)=>{
   localStorage.setItem('sp_gemini_key', e.target.value.trim());
 });
 
-// Export AI Table as PNG Image using html2canvas
 document.getElementById('exportImageBtn').addEventListener('click', ()=>{
   const outputEl = document.getElementById('aiOutput');
   const table = outputEl.querySelector('table');
@@ -949,11 +987,11 @@ document.getElementById('exportImageBtn').addEventListener('click', ()=>{
   }
 
   const prevBg = outputEl.style.backgroundColor;
-  outputEl.style.backgroundColor = '#0f131a'; // Ensure solid dark background for screenshot
+  outputEl.style.backgroundColor = '#0f131a';
 
   html2canvas(outputEl, {
     backgroundColor: '#0f131a',
-    scale: 2, // High resolution
+    scale: 2,
     useCORS: true
   }).then(canvas => {
     outputEl.style.backgroundColor = prevBg;
@@ -970,7 +1008,6 @@ document.getElementById('exportImageBtn').addEventListener('click', ()=>{
   });
 });
 
-// Export AI Table to CSV
 document.getElementById('exportAiCsvBtn').addEventListener('click', ()=>{
   const table = document.querySelector('#aiOutput table');
   if(!table){
@@ -998,7 +1035,6 @@ document.getElementById('exportAiCsvBtn').addEventListener('click', ()=>{
   document.body.removeChild(link);
 });
 
-// Build Data Payload for LLMs (Gemini / ChatGPT)
 function buildCartPayloadString(){
   const cartSymbols = Array.from(watchlistCart);
   let payloadLines = [];
@@ -1023,7 +1059,6 @@ function buildCartPayloadString(){
   return payloadLines.join('\n\n');
 }
 
-// ChatGPT Deep Link Integration
 document.getElementById('openChatGptBtn').addEventListener('click', ()=>{
   if(!watchlistCart.size){
     alert('Your cart is empty! Add stocks to the cart first.');
@@ -1049,7 +1084,6 @@ ${payloadStr}`;
   });
 });
 
-// Fetching Data
 function fmtDate(d){ return d.toISOString().slice(0,10); }
 
 async function fetchChunk(symbols, start, end, creds, timeframe='1Day'){
@@ -1150,8 +1184,6 @@ const MIN_AVG_DOLLAR_VOL = 5000000;
 function computeSwingScore(r, sectorBullish){
   if(r.lastPrice != null && r.lastPrice < MIN_PRICE) return 0;
   if(r.avgDollarVol != null && r.avgDollarVol < MIN_AVG_DOLLAR_VOL) return 0;
-  // RS filter: a stock lagging SPY over the swing lookback isn't a long candidate, no matter how the
-  // pattern looks. Require known RS data and positive 1M relative strength before it can score at all.
   if(r.rsM1 == null || r.rsM1 <= 0) return 0;
 
   let score = 0;
@@ -1170,7 +1202,6 @@ function computeSwingScore(r, sectorBullish){
     if(r.pctFromEma34 >= 20) score -= 20;
     else if(r.pctFromEma34 >= 12) score -= 10;
   }
-  // RS bonus: reward stocks meaningfully outperforming SPY, not just barely positive.
   if(r.rsW1 != null){
     if(r.rsW1 >= 5) score += 10;
     else if(r.rsW1 >= 2) score += 5;
@@ -1185,15 +1216,12 @@ function ema(series, period){
   return out;
 }
 
-// ============================================================
 // 4H BUY SCAN — Supertrend + LinReg/EMA trend-cloud engine
-// (ported from the TrendCloud/SuperCloud scanner; same math, applied to 4H bars)
-// ============================================================
 const BUY4H_ATR_LEN = 20;
 const BUY4H_ATR_MULT = 2.5;
-const BUY4H_FRESH_LOOKBACK = 2; // candles — "buy within 2 candles"
-const BUY4H_DIST_CHASE_PCT = 1.5; // % distance from Supertrend line where an entry starts being "chased"
-let barsBySymbol4H = {}; // full 4H bar history for scan hits, cached so the chart can render without refetching
+const BUY4H_FRESH_LOOKBACK = 2;
+const BUY4H_DIST_CHASE_PCT = 1.5;
+let barsBySymbol4H = {};
 let expandedBuy4hSym = null;
 let buy4hHideChaseRisk = false;
 let buy4hSizerAccount = parseFloat(localStorage.getItem('sp_sizer_account')) || 10000;
@@ -1206,8 +1234,6 @@ function buy4hChaseRisk(barsAgo, distPct){
   return 'medium';
 }
 
-// EMA that tolerates leading NaNs (linReg is undefined for the first linRegLen-1 bars);
-// the plain ema() above assumes an all-numeric series and would propagate NaN forever otherwise.
 function emaSkipNaN(arr, period){
   const n = arr.length, out = new Array(n).fill(NaN);
   const k = 2/(period+1);
@@ -1275,7 +1301,6 @@ function computeSupertrendCloud(bars, atrLen, atrMult){
   return { trend, supertrend, linReg, emaLR, buyArrow, sellArrow };
 }
 
-// Most recent confirmed trend-flip (BUY or SELL), and how many candles ago it fired.
 function lastConfirmedSignal(ind, bars){
   const n = bars.length;
   for(let i=n-1;i>=0;i--){
@@ -1297,7 +1322,6 @@ async function runBuy4hScan(){
   const btn = document.getElementById('buy4hScanBtn');
   const statusEl = document.getElementById('buy4hStatusText');
   const bar = document.getElementById('buy4hProgressBar');
-  const originalStatusText = statusEl.textContent;
   btn.disabled = true; btn.textContent = 'Scanning…';
   statusEl.textContent = 'Fetching 4H bars (cached bars reused, only new candles downloaded)…';
   bar.style.width = '2%';
@@ -1310,8 +1334,6 @@ async function runBuy4hScan(){
     for(let i=0;i<ALL_SYMBOLS.length;i+=chunkSize){
       const chunk = ALL_SYMBOLS.slice(i, i+chunkSize);
       try{
-        // 200 days of 4H history is enough for the 80-bar linreg + EMA34-ish warmup;
-        // fetchBarsSmart only actually downloads what's missing since the last scan.
         const barsMap = await fetchBarsSmart(chunk, '4Hour', 200, creds);
         for(const sym of chunk){
           const bars = barsMap[sym] || [];
@@ -1432,7 +1454,7 @@ function renderBuy4hScan(){
       const pill1h = document.getElementById(`buy4hPill1h_${expandedBuy4hSym}`);
       const pillD = document.getElementById(`buy4hPillD_${expandedBuy4hSym}`);
       const alignEl = document.getElementById(`buy4hAlign_${expandedBuy4hSym}`);
-      if(!pill1h || !pillD || !alignEl) return; // panel closed/changed before this resolved
+      if(!pill1h || !pillD || !alignEl) return;
       const setPill = (el, label, prefix) => {
         if(!label){ el.textContent = `${prefix}: n/a`; el.className = 'tc-pill'; return; }
         el.textContent = `${prefix}: ${label.toUpperCase()}`;
@@ -1440,7 +1462,7 @@ function renderBuy4hScan(){
       };
       setPill(pill1h, h1, '1H');
       setPill(pillD, d1, 'D');
-      const bullCount = 1 + (h1==='bull'?1:0) + (d1==='bull'?1:0); // 4H leg is always bull for a BUY hit
+      const bullCount = 1 + (h1==='bull'?1:0) + (d1==='bull'?1:0);
       const known = 1 + (h1?1:0) + (d1?1:0);
       alignEl.textContent = `Alignment: ${bullCount}/${known}`;
       alignEl.className = `tc-pill ${bullCount===known && known===3 ? 'bull' : (bullCount<known ? 'bear' : '')}`;
@@ -1494,11 +1516,7 @@ function detectBullishTurn(series, shortP=8, longP=21, lookback=4){
   return false;
 }
 
-// How many trading days ago the sector's short EMA crossed above its long EMA — i.e. when it
-// actually started to turn bullish, not just whether it's bullish right now. Returns null if the
-// sector isn't currently in an EMA-bullish state, or if the crossover happened further back than
-// maxLookback (an established trend rather than a fresh turn).
-const NEW_TURN_WINDOW = 7; // trading days — turns within this window are flagged as "fresh"
+const NEW_TURN_WINDOW = 7;
 function daysSinceCross(series, shortP=8, longP=21, maxLookback=60){
   if(!series || series.length < longP + 2) return null;
   const s = ema(series, shortP), l = ema(series, longP), n = series.length;
@@ -1519,8 +1537,6 @@ function checkStock2CandleTurn(bars, breakoutLookback=10){
   const candle1Bullish = c1 > o1 && c1 >= c0;
   const candle2Bullish = c2 > o2 && c2 > c1;
 
-  // Real prior-downtrend check: price must have actually been below its short-term (8-period) EMA
-  // for most of the 5 sessions leading into the turn candles, not just "the first candle was red".
   const priorCloses = bars.slice(0, -2).map(x=>x.c);
   const priorEma8 = ema(priorCloses, 8);
   let belowEmaCount = 0, checked = 0;
@@ -1570,9 +1586,6 @@ function computeSymbolReturns(bars){
     const lastAtr = atrArr[atrArr.length-1];
     if(lastAtr && !Number.isNaN(lastAtr)){
       const atrBasedStop = last - lastAtr * 1.5;
-      // Structural stop: the recent swing low (10-bar) minus a small cushion. On quiet, low-ATR names
-      // the pure ATR stop can sit inside normal chop; taking whichever is wider anchors the stop to
-      // actual support instead of volatility math alone.
       const swingLookback = Math.min(10, bars.length);
       const recentLow = Math.min(...bars.slice(-swingLookback).map(x=>x.l));
       const swingStop = recentLow - lastAtr * 0.25;
@@ -1616,15 +1629,13 @@ function computeAll(){
       const lastClose = barsBySymbol[sym][barsBySymbol[sym].length-1].c;
       symReturns[sym].pctFromEma34 = lastEma34 ? (lastClose - lastEma34) / lastEma34 * 100 : null;
       symReturns[sym].ema34Value = lastEma34;
-      // Last 30 closes + matching EMA34 slice for the per-stock sparkline in Table View sub-rows.
       symReturns[sym].sparkCloses = symReturns[sym].closes.slice(-30);
       symReturns[sym].sparkEma = ind.ema34.slice(-30);
-      // Same, but last 7 closes for the 7D sparkline.
       symReturns[sym].sparkCloses7 = symReturns[sym].closes.slice(-7);
       symReturns[sym].sparkEma7 = ind.ema34.slice(-7);
     }
   }
-  // Relative strength vs SPY, computed once per stock so the swing score can gate/reward it.
+
   const spyRet = symReturns['SPY'];
   for(const sym of ALL_SYMBOLS){
     const r = symReturns[sym];
@@ -1645,8 +1656,6 @@ function computeAll(){
     const spark = buildGroupIndex(closesArrs, 30);
     const spark7 = buildGroupIndex(closesArrs, 7);
     const fullSpark = buildGroupIndex(closesArrs, null);
-    // EMA34 computed on the same self-normalized 30D/7D series as the price line, so both share
-    // one scale and actually overlay correctly (mixing in the full-history basis would not).
     const sparkEma = spark.length >= 2 ? ema(spark, 34) : null;
     const sparkEma7 = spark7.length >= 2 ? ema(spark7, 34) : null;
 
@@ -1692,7 +1701,6 @@ function computeAll(){
   return symReturns;
 }
 
-// Indicator Functions
 function computePVT(closes, volumes){
   const pvt = [0];
   for(let i=1;i<closes.length;i++){
@@ -1719,7 +1727,7 @@ function ewmWilder(values, period){
     const v = values[i];
     if(v === null || Number.isNaN(v)){ out[i] = NaN; continue; }
     if(prev === null){ out[i] = v; prev = v; }
-    else { out[i] = v*alpha + prev*(1-alpha); prev = out[i]; }
+    else { prev = v*alpha + prev*(1-alpha); prev = out[i]; }
   }
   return out;
 }
@@ -1790,9 +1798,6 @@ function destroyBuy4hChart(){
   }
 }
 
-// Chart for a 4H Buy Scan hit, styled after the TrendCloud reference look:
-// cyan/magenta candles, a green/red translucent cloud hugging the Supertrend step-line,
-// and BUY/SELL arrow markers.
 function mountBuy4hChart(elId, bars, displayLimit=60){
   if(typeof LightweightCharts === 'undefined') return null;
   const el = document.getElementById(elId);
@@ -1800,8 +1805,8 @@ function mountBuy4hChart(elId, bars, displayLimit=60){
   const ind = computeSupertrendCloud(bars, BUY4H_ATR_LEN, BUY4H_ATR_MULT);
   if(!ind) return null;
 
-  const UP_COLOR = '#22d3ee';   // cyan
-  const DOWN_COLOR = '#ec4899'; // magenta
+  const UP_COLOR = '#22d3ee';
+  const DOWN_COLOR = '#ec4899';
   const TREND_LINE = {1:'#0ebb23', '-1':'#ff5c6c'};
   const TREND_FILL_TOP = {1:'rgba(14,187,35,0.28)', '-1':'rgba(255,92,108,0.05)'};
   const TREND_FILL_BOTTOM = {1:'rgba(14,187,35,0.02)', '-1':'rgba(255,92,108,0.30)'};
@@ -1825,9 +1830,6 @@ function mountBuy4hChart(elId, bars, displayLimit=60){
   const validBars = displayBars.map((b,j)=>({ time: Math.floor(new Date(b.t).getTime()/1000), idx: startIdx+j, b }));
   candleSeries.setData(validBars.map(v => ({ time:v.time, open:v.b.o, high:v.b.h, low:v.b.l, close:v.b.c })));
 
-  // Supertrend step-line + trend-colored cloud. invertFilledArea makes the fill hug the
-  // side of the line where price actually sits: upward (toward candles) in an uptrend,
-  // downward (toward candles) in a downtrend — matching the reference's cloud look.
   let runStart = 0;
   for(let i=1;i<=validBars.length;i++){
     const changed = i === validBars.length || ind.trend[validBars[i].idx] !== ind.trend[validBars[runStart].idx];
@@ -1859,8 +1861,6 @@ function mountBuy4hChart(elId, bars, displayLimit=60){
   return chart;
 }
 
-// Fetches bars for a symbol on a given timeframe just to read its current Supertrend
-// trend direction, used for the header alignment pills (1H / 4H / Daily).
 async function fetchTrendLabel(sym, timeframe){
   try{
     const creds = getCreds();
@@ -1876,57 +1876,6 @@ async function fetchTrendLabel(sym, timeframe){
 }
 async function fetch1hTrendLabel(sym){ return fetchTrendLabel(sym, '1Hour'); }
 async function fetchDailyTrendLabel(sym){ return fetchTrendLabel(sym, '1Day'); }
-
-// ============================================================
-// Per-stock Supertrend trend badges (1H / 4H) shown on the individual
-// ticker sub-rows in the sector Table View. Lazily fetched — only for
-// symbols actually visible once a sector group is expanded — batched into
-// one API call per timeframe per group (like the 4H Buy Scan does), and
-// cached in memory for the session (fetchBarsSmart also caches to
-// IndexedDB, so repeat expands of the same group are cheap too).
-// ============================================================
-const stTrendCache = { '1Hour': {}, '4Hour': {} }; // sym -> 'bull' | 'bear' | 'na'
-const stTrendGroupInFlight = { '1Hour': new Set(), '4Hour': new Set() };
-
-async function ensureGroupStTrends(symList){
-  for(const timeframe of ['1Hour','4Hour']){
-    const pending = symList.filter(sym => stTrendCache[timeframe][sym] === undefined && !stTrendGroupInFlight[timeframe].has(sym));
-    if(!pending.length) continue;
-    pending.forEach(s => stTrendGroupInFlight[timeframe].add(s));
-    const creds = getCreds();
-    if(!creds || !creds.key){
-      pending.forEach(s => stTrendCache[timeframe][s] = 'na');
-      pending.forEach(s => stTrendGroupInFlight[timeframe].delete(s));
-      continue;
-    }
-    const lookbackDays = timeframe === '1Hour' ? 30 : 60;
-    try{
-      const barsMap = await fetchBarsSmart(pending, timeframe, lookbackDays, creds);
-      for(const sym of pending){
-        const bars = barsMap[sym] || [];
-        let label = 'na';
-        if(bars.length >= 30){
-          const ind = computeSupertrendCloud(bars, BUY4H_ATR_LEN, BUY4H_ATR_MULT);
-          if(ind) label = ind.trend[ind.trend.length-1] === 1 ? 'bull' : 'bear';
-        }
-        stTrendCache[timeframe][sym] = label;
-      }
-    }catch(e){
-      pending.forEach(s => stTrendCache[timeframe][s] = 'na');
-    }finally{
-      pending.forEach(s => stTrendGroupInFlight[timeframe].delete(s));
-      if(activeView === 'table') renderTable();
-    }
-  }
-}
-
-function stBadgeHtml(sym, timeframe, label){
-  const short = timeframe === '1Hour' ? '1H' : '4H';
-  if(label === undefined) return `<span class="st-badge na" title="Loading ${short} Supertrend…">···</span>`;
-  if(label === 'na') return `<span class="st-badge na" title="Not enough ${short} bar history">—</span>`;
-  const isBull = label === 'bull';
-  return `<span class="st-badge ${isBull?'bull':'bear'}" title="${short} Supertrend: ${isBull?'Bullish':'Bearish'}">${isBull?'▲':'▼'}</span>`;
-}
 
 const liveCharts = { h: null, d: null };
 function destroyLiveCharts(){
@@ -2132,7 +2081,7 @@ function getOrderedSectorEntries(){
   return entries;
 }
 
-// AI Analysis Engine: High-to-Low Sorting & Complete Color Coding
+// AI Analysis Engine
 function renderHtmlAndApplyColors(markdownText, outputDiv){
   outputDiv.innerHTML = marked.parse(markdownText);
   const table = outputDiv.querySelector('table');
@@ -2143,15 +2092,12 @@ function renderHtmlAndApplyColors(markdownText, outputDiv){
   const sentIdx = headerCells.findIndex(h => h.includes('sentiment'));
   const prioIdx = headerCells.findIndex(h => h.includes('priority'));
 
-  // Collect table rows
   const tbody = table.querySelector('tbody') || table;
   const rows = Array.from(tbody.querySelectorAll('tr')).filter(tr => tr.querySelectorAll('td').length > 0);
 
-  // Post-Process and Apply Badges to Cells
   rows.forEach(tr => {
     const tds = tr.querySelectorAll('td');
-    
-    // 1. Color Code Bias
+
     if(biasIdx !== -1 && tds[biasIdx]){
       const txt = tds[biasIdx].innerText.trim();
       if(/bull(ish)?/i.test(txt)){
@@ -2163,7 +2109,6 @@ function renderHtmlAndApplyColors(markdownText, outputDiv){
       }
     }
 
-    // 2. Color Code Sentiment
     if(sentIdx !== -1 && tds[sentIdx]){
       const txt = tds[sentIdx].innerText.trim();
       if(/bull|positive|strong|high|up/i.test(txt)){
@@ -2175,7 +2120,6 @@ function renderHtmlAndApplyColors(markdownText, outputDiv){
       }
     }
 
-    // 3. Color Code Priority
     if(prioIdx !== -1 && tds[prioIdx]){
       const txt = tds[prioIdx].innerText.trim();
       if(/^high/i.test(txt)){
@@ -2194,7 +2138,6 @@ function renderHtmlAndApplyColors(markdownText, outputDiv){
     }
   });
 
-  // 4. Client-side Sort: High -> Medium -> Low
   if(prioIdx !== -1){
     rows.sort((a,b) => {
       const pA = parseInt(a.getAttribute('data-priority-score') || '0', 10);
@@ -2320,7 +2263,7 @@ function renderTable(){
 
   if(!entries.length){
     destroyLiveCharts();
-    tbody.innerHTML = `<tr><td colspan="11"><div class="empty-state">No matching results found for this scan.</div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state">No matching results found for this scan.</div></td></tr>`;
     return;
   }
 
@@ -2336,7 +2279,7 @@ function renderTable(){
           : `<span class="badge bullish">▲ Bullish Sector${d.turnDaysAgo!=null ? ` · turned ${d.turnDaysAgo}d ago` : ''}</span>`)
       : '';
     const badges = `${bullishBadge} ${hitsCount > 0 ? `<span class="badge turn-hit">★ ${hitsCount} Turn Hit${hitsCount>1?'s':''}</span>` : ''}${leader ? `<span class="badge leader">Leader: ${leader.sym} ${leader.val>0?'+':''}${leader.val.toFixed(1)}%</span>` : ''}`;
-    
+
     html += `<tr class="group-row${isOpen?' expanded':''}" data-group="${name}">
       <td><div class="group-name"><span class="chev">▸</span><span class="gname-text">${name}</span></div><div class="badges">${badges}</div></td>
       <td>${sparkSvg(d.spark7, d.sparkEma7)}</td>
@@ -2347,8 +2290,6 @@ function renderTable(){
       <td>${pctSpan(d.m3)}</td>
       <td>${pctSpan(d.m6)}</td>
       <td>${pctSpan(d.ytd)}</td>
-      <td class="mono" style="color:var(--muted); font-size:10px;">—</td>
-      <td class="mono" style="color:var(--muted); font-size:10px;">—</td>
     </tr>`;
 
     if(isOpen){
@@ -2359,7 +2300,6 @@ function renderTable(){
       const inCart = watchlistCart.has(activeSym);
 
       if(!barsBySymbol1H[activeSym] && !hourlyFetchInFlight.has(activeSym)) ensureHourlyBars(activeSym);
-      ensureGroupStTrends(symList);
       chartPanelState = {
         activeSym,
         mountHourly: !!(barsBySymbol1H[activeSym] && barsBySymbol1H[activeSym].length >= 40),
@@ -2368,7 +2308,7 @@ function renderTable(){
         dailyBars: barsBySymbol[activeSym]
       };
 
-      const chartPanelHtml = `<tr class="chart-row"><td colspan="11">
+      const chartPanelHtml = `<tr class="chart-row"><td colspan="9">
         <div class="chart-panel">
           <div class="chart-panel-head">
             <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
@@ -2397,7 +2337,6 @@ function renderTable(){
         </div>
       </td></tr>`;
 
-      // Chart opens right below whichever stock row is active, not at the top of the group.
       for(const sym of symList){
         const r = d.tickers[sym];
         const isAdded = watchlistCart.has(sym);
@@ -2419,8 +2358,6 @@ function renderTable(){
           <td>${pctSpan(r.m3)}</td>
           <td>${pctSpan(r.m6)}</td>
           <td>${pctSpan(r.ytd)}</td>
-          <td>${stBadgeHtml(sym, '1Hour', stTrendCache['1Hour'][sym])}</td>
-          <td>${stBadgeHtml(sym, '4Hour', stTrendCache['4Hour'][sym])}</td>
         </tr>`;
         if(sym === activeSym){
           html += chartPanelHtml;
@@ -2434,7 +2371,7 @@ function renderTable(){
   if(chartPanelState){
     if(chartPanelState.mountHourly) mountTimeframeChart('h', 'lwcPriceH', 'lwcLowerH', 'statTrendH', 'statPvtH', chartPanelState.hourlyBars);
     if(chartPanelState.mountDaily) mountTimeframeChart('d', 'lwcPriceD', 'lwcLowerD', 'statTrendD', 'statPvtD', chartPanelState.dailyBars, 30);
-    
+
     const cartToggleBtn = document.getElementById('cartToggleBtn');
     if(cartToggleBtn){
       cartToggleBtn.addEventListener('click', (e)=>{
@@ -2589,7 +2526,7 @@ function renderBullishScanner(){
   if(chartPanelState){
     if(chartPanelState.mountHourly) mountTimeframeChart('h', 'bLwcPriceH', 'bLwcLowerH', 'bStatTrendH', 'bStatPvtH', chartPanelState.hourlyBars);
     if(chartPanelState.mountDaily) mountTimeframeChart('d', 'bLwcPriceD', 'bLwcLowerD', 'bStatTrendD', 'bStatPvtD', chartPanelState.dailyBars, 30);
-    
+
     const bCartToggleBtn = document.getElementById('bCartToggleBtn');
     if(bCartToggleBtn){
       bCartToggleBtn.addEventListener('click', (e)=>{
@@ -2627,6 +2564,8 @@ function renderHeatMap(){
   entries.sort((a,b)=> (b[1][hmMetric]||-Infinity) - (a[1][hmMetric]||-Infinity));
 
   let html = '';
+  const symbolsToResolve = new Set();
+
   for(const [name, d] of entries){
     let tiles = '';
     const sortedTickers = Object.entries(d.tickers)
@@ -2642,9 +2581,22 @@ function renderHeatMap(){
         : (val > 0 ? `rgba(52, 211, 153, ${Math.min(0.85, Math.abs(val)/10 + 0.15)})` : `rgba(248, 113, 113, ${Math.min(0.85, Math.abs(val)/10 + 0.15)})`);
       const label = isSwing ? `${Math.round(val)}` : `${val > 0 ? '+' : ''}${val.toFixed(1)}%`;
       const inCart = watchlistCart.has(sym);
+
+      const cached = heatmapTrendCache[sym];
+      const h1Cls = cached?.h1 ? cached.h1 : '';
+      const h4Cls = cached?.h4 ? cached.h4 : '';
+      const h1Txt = cached?.h1 ? (cached.h1 === 'bull' ? '1H▲' : '1H▼') : '1H…';
+      const h4Txt = cached?.h4 ? (cached.h4 === 'bull' ? '4H▲' : '4H▼') : '4H…';
+
+      if(!cached) symbolsToResolve.add(sym);
+
       tiles += `<div class="hm-tile ${r.turnHit ? 'hit' : ''} ${inCart ? 'in-cart' : ''}" style="background:${bg}" data-sym="${sym}" data-group="${name}" title="${sym} (${name})">
         <span class="t-sym">${sym}</span>
         <span class="t-pct">${label}</span>
+        <div class="hm-tile-tfs">
+          <span class="tf-badge ${h1Cls}" id="hmTf1h_${sym}">${h1Txt}</span>
+          <span class="tf-badge ${h4Cls}" id="hmTf4h_${sym}">${h4Txt}</span>
+        </div>
       </div>`;
     }
 
@@ -2668,6 +2620,33 @@ function renderHeatMap(){
       renderTable();
     });
   });
+
+  if(symbolsToResolve.size > 0){
+    const creds = getCreds();
+    if(creds.key && creds.secret){
+      Array.from(symbolsToResolve).forEach(async (sym) => {
+        try {
+          const [h1Trend, h4Trend] = await Promise.all([
+            fetchTrendLabel(sym, '1Hour'),
+            fetchTrendLabel(sym, '4Hour')
+          ]);
+
+          heatmapTrendCache[sym] = { h1: h1Trend, h4: h4Trend };
+
+          const el1h = document.getElementById(`hmTf1h_${sym}`);
+          const el4h = document.getElementById(`hmTf4h_${sym}`);
+          if(el1h && h1Trend){
+            el1h.className = `tf-badge ${h1Trend}`;
+            el1h.textContent = h1Trend === 'bull' ? '1H▲' : '1H▼';
+          }
+          if(el4h && h4Trend){
+            el4h.className = `tf-badge ${h4Trend}`;
+            el4h.textContent = h4Trend === 'bull' ? '4H▲' : '4H▼';
+          }
+        } catch(e) {}
+      });
+    }
+  }
 }
 
 // Multi-Panel Mini Charts
@@ -2739,7 +2718,6 @@ function renderNearEmaGrid(){
   }
   list.sort((a,b) => Math.abs(a.pctFromEma34) - Math.abs(b.pctFromEma34));
 
-  const spyOk = groupData['ETF/Index'] && groupData['ETF/Index'].tickers['SPY'];
   countEl.textContent = `${list.length} stock${list.length===1?'':'s'} within ${nearEmaThresholdPct}% of EMA34, in sectors outperforming SPY`;
 
   if(!list.length){
@@ -3055,7 +3033,7 @@ async function loadAll(forceRefresh=false){
     else if(activeView === 'nearema') renderNearEmaGrid();
     else renderHeatMap();
   }catch(err){
-    document.getElementById('tbody').innerHTML = `<tr><td colspan="11"><div class="empty-state">Error: ${(err.message||'Failed loading data')}</div></td></tr>`;
+    document.getElementById('tbody').innerHTML = `<tr><td colspan="9"><div class="empty-state">Error: ${(err.message||'Failed loading data')}</div></td></tr>`;
   }finally{
     syncBtn.classList.remove('spinning');
   }
