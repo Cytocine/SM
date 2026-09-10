@@ -1,6 +1,7 @@
 const CACHE_NAME = 'sector-pulse-v1';
 
 const SHELL_ASSETS = [
+  './',
   './index.html',
   './manifest.json',
   './icon-192.png',
