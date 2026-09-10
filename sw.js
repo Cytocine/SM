@@ -2,11 +2,13 @@ const CACHE_NAME = 'sector-pulse-v1';
 
 const SHELL_ASSETS = [
   './',
-  './index.html',
-  './manifest.json',
-  './icon-192.png',
-  './icon-512.png',
-  './icon-maskable-512.png'
+  "./index.html",
+  "./manifest.json",
+  "./icon-192.png",
+  "./icon-512.png",
+  "./icon-512-maskable.png",
+  "./apple-touch-icon.png",
+  "https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"
 ];
 
 // Third-party libraries the app depends on — safe to cache-first since
