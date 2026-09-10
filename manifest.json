@@ -2,7 +2,7 @@
   "name": "Sector Pulse",
   "short_name": "SectorPulse",
   "description": "Sector and stock bullish-turn scanner with EMA/turn-pattern signals and 4H trend charting.",
-  "start_url": "./index.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
