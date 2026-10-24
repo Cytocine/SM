@@ -415,7 +415,6 @@
     .header-inner{ padding:8px 12px; gap:6px; }
     .brand{ order:1; font-size:14px; }
     .header-actions{ order:2; margin-left:auto; }
-    .search-wrap{ order:3; flex:1 1 100%; max-width:none; }
     .view-switch{
       order:4; flex:1 1 100%; max-width:100%;
       overflow-x:auto; -webkit-overflow-scrolling:touch;
@@ -502,12 +501,7 @@
       <button class="view-tab" id="tabBullish">🔥 Most Bullish Today</button>
       <button class="view-tab" id="tabHeatmap">Sector Heat Map</button>
       <button class="view-tab" id="tabNearEma">🎯 Near EMA34</button>
-      <button class="view-tab" id="tabBuy4h">⚡ 4H Buy Scan</button>
-    </div>
-
-    <div class="search-wrap">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input id="searchInput" type="text" placeholder="Filter ticker or sector…">
+      <button class="view-tab" id="tabBase">📦 Tight Base</button>
     </div>
 
     <button class="pill-toggle" id="scannerToggle" title="Filter stocks that turned bullish (2 candles) in a bullish sector">
@@ -639,31 +633,31 @@
     </div>
     <div class="multi-chart-grid" id="nearEmaGrid"></div>
   </div>
-
-  <!-- 4H Buy Scan View -->
-  <div id="buy4hViewContainer" class="view-container">
+  <!-- Tight Base View -->
+  <div id="baseViewContainer" class="view-container">
     <div class="above-ema-controls">
-      <button class="pill-toggle" id="buy4hScanBtn">⚡ Scan 4H Buy Signals</button>
-      <button class="pill-toggle" id="buy4hChaseToggle" title="Hide signals that are 2+ candles old or already far from the Supertrend line">🙈 Hide Chase Risk</button>
-      <span id="buy4hStatusText" style="color:var(--muted); font-size:12px;">Uses the same Supertrend + LinReg-cloud trend engine as the chart panel, on 4-hour candles — flags symbols whose trend flipped bullish within the last 2 candles. Tap a row to see the 4H chart with the indicator.</span>
+      <span id="baseCount">—</span>
+      <div class="hm-sort-group">
+        <button class="pill-toggle" id="baseStrongToggle" title="Only show setups in sectors outperforming SPY">Strong sectors only</button>
+        <span>Above rising EMA34 · tight 6-day range ≤ 2.5× ATR · within 3% of 20D high · stop under base</span>
+      </div>
     </div>
-    <div class="progress-wrap"><div class="progress-bar" id="buy4hProgressBar"></div></div>
     <div class="table-wrap">
       <div class="scroll-region">
         <table class="bullish-table">
           <thead>
             <tr>
               <th style="text-align:left;">Symbol / Sector</th>
-              <th>4H</th>
-              <th>Signal</th>
+              <th>Status</th>
               <th>Price</th>
-              <th>Dist. from Supertrend</th>
-              <th>Chase Risk</th>
+              <th>Base Range</th>
+              <th>From 20D High</th>
+              <th>Stop (Risk)</th>
+              <th>vs EMA34</th>
+              <th>Today</th>
             </tr>
           </thead>
-          <tbody id="buy4hTbody">
-            <tr><td colspan="6"><div class="empty-state">Tap "Scan 4H Buy Signals" to check every symbol for a fresh 4H trend-flip to bullish.</div></td></tr>
-          </tbody>
+          <tbody id="baseTbody"></tbody>
         </table>
       </div>
     </div>
@@ -1629,6 +1623,7 @@ function computeAll(){
       const ind = computeChartIndicators(barsBySymbol[sym]);
       symReturns[sym].emaRegime = ind.ema34Regime[ind.ema34Regime.length-1];
       symReturns[sym].pvtBullish = ind.bullish[ind.bullish.length-1];
+      symReturns[sym].base = computeTightBase(barsBySymbol[sym], ind.ema34);
       const lastEma34 = ind.ema34[ind.ema34.length-1];
       const lastClose = barsBySymbol[sym][barsBySymbol[sym].length-1].c;
       symReturns[sym].pctFromEma34 = lastEma34 ? (lastClose - lastEma34) / lastEma34 * 100 : null;
@@ -2062,7 +2057,7 @@ function orderedTickersForGroup(d){
 }
 
 function getOrderedSectorEntries(){
-  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  const q = '';
   let entries = Object.entries(groupData);
 
   if(q){
@@ -2443,7 +2438,7 @@ function renderTable(){
 
 function renderBullishScanner(){
   const btbody = document.getElementById('bullishTbody');
-  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  const q = '';
   let list = getAllStockList();
 
   if(q){
@@ -2712,7 +2707,7 @@ function renderNearEmaGrid(){
   destroyMultiCharts();
   const grid = document.getElementById('nearEmaGrid');
   const countEl = document.getElementById('nearEmaCount');
-  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  const q = '';
 
   let list = getAllStockList().filter(item => item.pctFromEma34 !== undefined && item.pctFromEma34 !== null && barsBySymbol[item.sym] && barsBySymbol[item.sym].length >= 40);
   list = list.filter(item => Math.abs(item.pctFromEma34) <= nearEmaThresholdPct);
@@ -2772,26 +2767,164 @@ function renderNearEmaGrid(){
   grid.querySelectorAll('.mini-chart-box').forEach(box => multiChartObserver.observe(box));
 }
 
+// TIGHT BASE SCAN — compressed range under a recent high, above a rising EMA34
+const BASE_LEN = 6;
+const BASE_MAX_ATR = 2.5;
+const BASE_NEAR_HIGH_PCT = 3;
+const BASE_MAX_EXT_EMA = 15;
+let baseStrongOnly = false;
+let expandedBaseSym = null;
+
+function computeTightBase(bars, ema34Arr){
+  const n = bars.length;
+  if(n < 60 || !ema34Arr || ema34Arr.length !== n) return null;
+  const last = bars[n-1];
+  const tr = bars.map((b,i)=>{ const pc = i>0 ? bars[i-1].c : b.c; return Math.max(b.h-b.l, Math.abs(b.h-pc), Math.abs(b.l-pc)); });
+  const atr = ema(tr, 14)[n-1];
+  if(!atr || Number.isNaN(atr)) return null;
+
+  const e = ema34Arr[n-1], e5 = ema34Arr[n-6];
+  if(!(last.c > e && e > e5)) return null;
+  const extPct = (last.c - e) / e * 100;
+  if(extPct > BASE_MAX_EXT_EMA) return null;
+
+  const hh20 = Math.max(...bars.slice(-20).map(b=>b.h));
+  const distHigh = (hh20 - last.c) / hh20 * 100;
+  if(distHigh > BASE_NEAR_HIGH_PCT) return null;
+
+  const test = (win)=>{
+    const hi = Math.max(...win.map(b=>b.h)), lo = Math.min(...win.map(b=>b.l));
+    return { hi, lo, rangeAtr:(hi-lo)/atr, vol: win.reduce((a,b)=>a+(b.v||0),0)/win.length };
+  };
+  const prior = test(bars.slice(-(BASE_LEN+1), -1));
+  const cur = test(bars.slice(-BASE_LEN));
+
+  let status = null, base = null;
+  if(prior.rangeAtr <= BASE_MAX_ATR && last.c > prior.hi){ status = 'Breakout'; base = prior; }
+  else if(cur.rangeAtr <= BASE_MAX_ATR){ status = 'Coiling'; base = cur; }
+  if(!status) return null;
+
+  const stop = base.lo - atr * 0.25;
+  const riskPct = (last.c - stop) / last.c * 100;
+  const vol30 = bars.slice(-36, -6).reduce((a,b)=>a+(b.v||0),0) / 30;
+  return {
+    status, baseHigh: base.hi, baseLow: base.lo, rangeAtr: base.rangeAtr,
+    distHigh, stop, riskPct, extPct, atr,
+    volDry: vol30 ? base.vol / vol30 : null
+  };
+}
+
+function getBaseList(){
+  const list = [];
+  for(const [sec, d] of Object.entries(groupData)){
+    if(baseStrongOnly && !d.sectorStrong) continue;
+    for(const [sym, r] of Object.entries(d.tickers)){
+      if(!r.base) continue;
+      if(r.lastPrice < MIN_PRICE || (r.avgDollarVol != null && r.avgDollarVol < MIN_AVG_DOLLAR_VOL)) continue;
+      list.push({ sym, sector: sec, r, b: r.base, strong: !!d.sectorStrong });
+    }
+  }
+  list.sort((a,c)=>{
+    if(a.b.status !== c.b.status) return a.b.status === 'Coiling' ? -1 : 1;
+    return a.b.riskPct - c.b.riskPct;
+  });
+  return list;
+}
+
+function renderBaseScan(){
+  destroyLiveCharts();
+  const tbody = document.getElementById('baseTbody');
+  const countEl = document.getElementById('baseCount');
+  const list = getBaseList();
+  const coil = list.filter(x=>x.b.status==='Coiling').length;
+  countEl.textContent = `${list.length} setup${list.length===1?'':'s'} · ${coil} coiling, ${list.length-coil} breaking out`;
+
+  if(!list.length){
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state">No tight bases right now${baseStrongOnly ? ' in strong sectors — turn off "Strong sectors only" to widen the scan' : ''}.</div></td></tr>`;
+    return;
+  }
+
+  let html = '', panel = null;
+  for(const item of list){
+    const { sym, sector, r, b } = item;
+    const isOpen = expandedBaseSym === sym;
+    const inCart = watchlistCart.has(sym);
+    const statusBadge = b.status === 'Coiling'
+      ? '<span class="badge turn-hit">◼ Coiling</span>'
+      : '<span class="badge bullish">▲ Breakout</span>';
+    html += `<tr class="group-row${isOpen?' expanded':''}" data-bsym2="${sym}">
+      <td><div class="group-name">
+        <span class="chev">▸</span>
+        <button class="cart-btn ${inCart?'active':''}" data-cart-sym="${sym}">${inCart?'★':'☆'}</button>
+        <span class="sym" style="font-weight:700; font-family:'JetBrains Mono',monospace;">${sym}</span>
+        <span style="color:var(--muted); font-size:11px;">(${sector})</span>
+        ${item.strong ? '<span class="badge rank">Strong sector</span>' : ''}
+      </div></td>
+      <td>${statusBadge}</td>
+      <td class="mono">$${r.lastPrice.toFixed(2)}</td>
+      <td class="mono">${b.rangeAtr.toFixed(1)}× ATR${b.volDry != null ? ` <span style="color:var(--muted);">· vol ${b.volDry.toFixed(1)}×</span>` : ''}</td>
+      <td class="mono">${b.distHigh.toFixed(1)}%</td>
+      <td class="mono">$${b.stop.toFixed(2)} <span style="color:var(--down);">(−${b.riskPct.toFixed(1)}%)</span></td>
+      <td class="mono">${b.extPct>=0?'+':''}${b.extPct.toFixed(1)}%</td>
+      <td>${pctSpan(r.today)}</td>
+    </tr>`;
+    if(isOpen){
+      if(barsBySymbol[sym] && barsBySymbol[sym].length >= 40) panel = { sym, bars: barsBySymbol[sym] };
+      html += `<tr class="chart-row"><td colspan="8">
+        <div class="chart-panel">
+          <div class="chart-panel-head">
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <span class="chart-title">${sector} · <strong style="color:var(--text);">${sym}</strong> · Base $${b.baseLow.toFixed(2)} – $${b.baseHigh.toFixed(2)} · Stop $${b.stop.toFixed(2)}</span>
+            </div>
+            ${pctSpan(r.today)}
+          </div>
+          <div class="chart-tf-block" style="min-width:100%;">
+            <div class="chart-tf-label-row"><span class="chart-tf-label">1D</span><span class="chart-tf-stats"><span id="baseStatTrendD" class="stat-pill">—</span><span id="baseStatPvtD" class="stat-pill">—</span></span></div>
+            <div class="lwc-price" id="baseLwcPriceD" style="height:240px;"></div><div class="lwc-lower" id="baseLwcLowerD"></div>
+          </div>
+        </div>
+      </td></tr>`;
+    }
+  }
+  tbody.innerHTML = html;
+
+  if(panel) mountTimeframeChart('d', 'baseLwcPriceD', 'baseLwcLowerD', 'baseStatTrendD', 'baseStatPvtD', panel.bars, 60);
+
+  tbody.querySelectorAll('tr.group-row').forEach(row=>{
+    row.addEventListener('click', ()=>{
+      const sym = row.getAttribute('data-bsym2');
+      expandedBaseSym = expandedBaseSym === sym ? null : sym;
+      renderBaseScan();
+    });
+  });
+  tbody.querySelectorAll('.cart-btn').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      toggleCartSymbol(btn.getAttribute('data-cart-sym'));
+    });
+  });
+}
+
 function switchView(view){
   activeView = view;
   document.getElementById('tableViewContainer').classList.toggle('active', activeView === 'table');
   document.getElementById('bullishViewContainer').classList.toggle('active', activeView === 'bullish');
   document.getElementById('heatmapViewContainer').classList.toggle('active', activeView === 'heatmap');
   document.getElementById('nearEmaViewContainer').classList.toggle('active', activeView === 'nearema');
-  document.getElementById('buy4hViewContainer').classList.toggle('active', activeView === 'buy4h');
+  document.getElementById('baseViewContainer').classList.toggle('active', activeView === 'base');
   document.getElementById('tabTable').classList.toggle('active', activeView === 'table');
   document.getElementById('tabBullish').classList.toggle('active', activeView === 'bullish');
   document.getElementById('tabHeatmap').classList.toggle('active', activeView === 'heatmap');
   document.getElementById('tabNearEma').classList.toggle('active', activeView === 'nearema');
-  document.getElementById('tabBuy4h').classList.toggle('active', activeView === 'buy4h');
+  document.getElementById('tabBase').classList.toggle('active', activeView === 'base');
+  destroyLiveCharts();
 
   if(activeView !== 'nearema') destroyMultiCharts();
-  if(activeView !== 'buy4h') destroyBuy4hChart();
 
   if(activeView === 'heatmap') renderHeatMap();
   else if(activeView === 'bullish') renderBullishScanner();
   else if(activeView === 'nearema') renderNearEmaGrid();
-  else if(activeView === 'buy4h') renderBuy4hScan();
+  else if(activeView === 'base') renderBaseScan();
   else renderTable();
 }
 
@@ -2848,6 +2981,7 @@ function toggleCartSymbol(sym){
   if(activeView === 'table') renderTable();
   else if(activeView === 'bullish') renderBullishScanner();
   else if(activeView === 'nearema') renderNearEmaGrid();
+  else if(activeView === 'base') renderBaseScan();
   else renderHeatMap();
 }
 
@@ -2974,12 +3108,11 @@ document.getElementById('tabTable').addEventListener('click', () => switchView('
 document.getElementById('tabBullish').addEventListener('click', () => switchView('bullish'));
 document.getElementById('tabHeatmap').addEventListener('click', () => switchView('heatmap'));
 document.getElementById('tabNearEma').addEventListener('click', () => switchView('nearema'));
-document.getElementById('tabBuy4h').addEventListener('click', () => switchView('buy4h'));
-document.getElementById('buy4hScanBtn').addEventListener('click', runBuy4hScan);
-document.getElementById('buy4hChaseToggle').addEventListener('click', ()=>{
-  buy4hHideChaseRisk = !buy4hHideChaseRisk;
-  document.getElementById('buy4hChaseToggle').classList.toggle('active', buy4hHideChaseRisk);
-  renderBuy4hScan();
+document.getElementById('tabBase').addEventListener('click', () => switchView('base'));
+document.getElementById('baseStrongToggle').addEventListener('click', ()=>{
+  baseStrongOnly = !baseStrongOnly;
+  document.getElementById('baseStrongToggle').classList.toggle('active', baseStrongOnly);
+  renderBaseScan();
 });
 
 document.getElementById('nearEmaThreshold').addEventListener('change', (e) => {
@@ -2998,6 +3131,7 @@ document.getElementById('scannerToggle').addEventListener('click', ()=>{
   if(activeView === 'table') renderTable();
   else if(activeView === 'bullish') renderBullishScanner();
   else if(activeView === 'nearema') renderNearEmaGrid();
+  else if(activeView === 'base') renderBaseScan();
   else renderHeatMap();
 });
 
@@ -3011,13 +3145,6 @@ document.getElementById('playPauseBtn').addEventListener('click', togglePlaySect
 document.getElementById('exportCartBtn').addEventListener('click', exportCartSymbolsOnly);
 document.getElementById('exportHitsBtn').addEventListener('click', exportHitsSymbolsOnly);
 document.getElementById('exportBullishBtn').addEventListener('click', exportTop10BullishStocksOnly);
-
-document.getElementById('searchInput').addEventListener('input', () => {
-  if(activeView === 'table') renderTable();
-  else if(activeView === 'bullish') renderBullishScanner();
-  else if(activeView === 'nearema') renderNearEmaGrid();
-  else renderHeatMap();
-});
 
 document.getElementById('syncBtn').addEventListener('click', () => loadAll(true));
 
@@ -3035,6 +3162,7 @@ async function loadAll(forceRefresh=false){
     if(activeView === 'table') renderTable();
     else if(activeView === 'bullish') renderBullishScanner();
     else if(activeView === 'nearema') renderNearEmaGrid();
+    else if(activeView === 'base') renderBaseScan();
     else renderHeatMap();
   }catch(err){
     document.getElementById('tbody').innerHTML = `<tr><td colspan="9"><div class="empty-state">Error: ${(err.message||'Failed loading data')}</div></td></tr>`;
