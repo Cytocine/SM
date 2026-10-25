@@ -729,6 +729,7 @@
         <button class="pill-toggle" id="baseStrongToggle" title="Only show setups in sectors outperforming SPY">Strong sectors only</button>
         <span>Sort</span>
         <select class="sel-sm" id="baseSortSel"><option value="score">Score</option><option value="risk">Lowest risk</option><option value="status">Coiling first</option></select>
+        <button class="pill-toggle" id="baseTxtBtn" title="Download the symbols shown here as a text watchlist">⬇ Watchlist .txt</button>
         <button class="pill-toggle" id="armAllBtn" title="Arm every coiling setup scoring 70 or more">🎯 Arm top coiling</button>
         <span>Above rising EMA34 · tight 6-day range ≤ 2.5× ATR · within 3% of 20D high</span>
       </div>
@@ -771,6 +772,7 @@
       <div class="hm-sort-group">
         <span>Sort</span>
         <select class="sel-sm" id="reclaimSortSel"><option value="score">Score</option><option value="risk">Lowest risk</option><option value="status">Most recent</option></select>
+        <button class="pill-toggle" id="reclaimTxtBtn" title="Download the symbols shown here as a text watchlist">⬇ Watchlist .txt</button>
         <button class="pill-toggle" id="reclaimStrongToggle" title="Only show setups in sectors outperforming SPY">Strong sectors only</button>
         <span>Earliest entry: daily trend just flipped, stop under the reclaim low</span>
       </div>
@@ -787,6 +789,7 @@
         <span>Auto-check</span>
         <select class="sel-sm" id="armedAutoSel"><option value="0">off</option><option value="1">1 min</option><option value="2">2 min</option><option value="5">5 min</option><option value="10">10 min</option></select>
         <button class="pill-toggle" id="armedCheckBtn">↻ Check now</button>
+        <button class="pill-toggle" id="armedTxtBtn" title="Download the armed symbols as a text watchlist">⬇ Watchlist .txt</button>
         <button class="pill-toggle" id="armedClearBtn">Clear finished</button>
       </div>
     </div>
@@ -818,6 +821,7 @@
     <div class="above-ema-controls">
       <span id="missedCount">—</span>
       <div class="hm-sort-group">
+        <button class="pill-toggle" id="missedTxtBtn" title="Download the symbols listed here as a text watchlist">⬇ Watchlist .txt</button>
         <span>Move ≥</span>
         <select class="sel-sm" id="missedGain"><option value="5">5%</option><option value="8">8%</option><option value="10">10%</option><option value="15">15%</option><option value="25">25%</option></select>
         <span>within</span>
@@ -861,6 +865,7 @@
       <button class="pill-toggle" id="vCart">☆ Cart</button>
       <button class="pill-toggle ai-btn" id="vExport" title="Download chart + drawings as PNG">📸 PNG</button>
       <button class="pill-toggle" id="vCopy" title="Copy chart image to clipboard">📋 Copy</button>
+      <button class="pill-toggle" id="vList" title="Download every symbol in this list as a plain text watchlist (one per line)">📝 Watchlist .txt</button>
       <button class="pill-toggle" id="vClose" title="Close (Esc)">✕</button>
     </div>
   </div>
@@ -3317,6 +3322,19 @@ function destroyBaseMini(){
   for(const k of Object.keys(baseMini)){ try{ baseMini[k].remove(); }catch(e){} delete baseMini[k]; }
 }
 
+function wmOptions(sym, tf, width, minFont, maxFont){
+  const fs = Math.max(minFont || 30, Math.min(maxFont || 120, Math.round((width || 600) * 0.085)));
+  return { visible:true, text: sym + ' · ' + tf, color:'rgba(255,255,255,0.07)', fontSize:fs, fontFamily:"'Space Grotesk', sans-serif", fontStyle:'bold', horzAlign:'center', vertAlign:'center' };
+}
+
+function exportSyms(syms, label){
+  const u = [...new Set(syms)];
+  if(!u.length){ toast('Nothing to export yet.'); return; }
+  const name = `${label}_${fmtDate(new Date())}.txt`;
+  downloadRawSymbols(u, name);
+  toast(`Saved ${u.length} symbol${u.length===1?'':'s'} (one per line) to ${name}`);
+}
+
 function addSetupLines(series, sym, kind, labels){
   const s = setupFor(sym, kind);
   if(!s) return;
@@ -3336,6 +3354,7 @@ function mountSetupMini(el, sym, kind){
   const ind = computeChartIndicators(bars);
   const chart = LightweightCharts.createChart(el, {
     autoSize: true, handleScroll:false, handleScale:false,
+    watermark: wmOptions(sym, '1D', el.clientWidth, 26, 44),
     layout:{ background:{color:'transparent'}, textColor:'#8a95a3', fontFamily:"'JetBrains Mono', monospace", fontSize:9 },
     grid:{ vertLines:{visible:false}, horzLines:{color:'rgba(255,255,255,0.03)'} },
     rightPriceScale:{ borderColor:'#232a33', autoScale:true },
@@ -4246,6 +4265,7 @@ function vBuildChart(sym){
   const ind = computeChartIndicators(bars);
   const chart = LightweightCharts.createChart(V.chartEl, {
     autoSize: true,
+    watermark: wmOptions(sym, V.tf, V.chartEl.clientWidth, 40, 130),
     layout:{ background:{color:'#0a0e14'}, textColor:'#8a95a3', fontFamily:"'JetBrains Mono', monospace", fontSize:11 },
     grid:{ vertLines:{visible:false}, horzLines:{color:'rgba(255,255,255,0.04)'} },
     rightPriceScale:{ borderColor:'#1c232d', autoScale:true, scaleMargins:{ top:0.08, bottom:0.2 } },
@@ -4731,6 +4751,11 @@ document.getElementById('reclaimStrongToggle').addEventListener('click', ()=>{
 });
 document.getElementById('armAllBtn').addEventListener('click', ()=> armAllTop(70));
 document.getElementById('top10Btn').addEventListener('click', reviewTop10);
+document.getElementById('baseTxtBtn').addEventListener('click', ()=> exportSyms(setupItems('base').map(x=>x.sym), 'tight_base_watchlist'));
+document.getElementById('reclaimTxtBtn').addEventListener('click', ()=> exportSyms(setupItems('reclaim').map(x=>x.sym), 'early_reclaim_watchlist'));
+document.getElementById('armedTxtBtn').addEventListener('click', ()=> exportSyms(ARMED.filter(a=>a.status==='waiting').map(a=>a.sym), 'armed_watchlist'));
+document.getElementById('missedTxtBtn').addEventListener('click', ()=> exportSyms(computeMissed().map(r=>r.sym), 'missed_moves_watchlist'));
+document.getElementById('vList').addEventListener('click', ()=> exportSyms(V.syms, 'watchlist'));
 document.getElementById('armedNotifyBtn').addEventListener('click', ensureNotifyPermission);
 document.getElementById('armedCheckBtn').addEventListener('click', ()=> pollArmed(true));
 document.getElementById('armedClearBtn').addEventListener('click', ()=>{ ARMED = ARMED.filter(a => a.status === 'waiting'); saveArmed(); renderArmed(); });
