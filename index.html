@@ -489,6 +489,47 @@
     table{ min-width:580px; }
   }
 
+
+  /* Setup engine UI */
+  .regime-banner{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:8px 12px; margin-bottom:12px; font-size:12px; color:var(--muted);}
+  .rb-state{font-weight:800; font-family:'JetBrains Mono',monospace; padding:2px 8px; border-radius:6px; margin-right:8px; font-size:11px; letter-spacing:.3px;}
+  .rb-on{background:var(--up-dim); color:var(--up); border:1px solid rgba(52,211,153,.4);}
+  .rb-caution{background:rgba(240,168,60,.15); color:var(--amber); border:1px solid rgba(240,168,60,.45);}
+  .rb-off{background:var(--down-dim); color:var(--down); border:1px solid rgba(248,113,113,.4);}
+  .rb-right{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  .rb-right label{display:flex; align-items:center; gap:4px; font-size:11px; color:var(--muted); white-space:nowrap;}
+  .rb-right input[type=number]{width:84px; background:var(--panel-2); border:1px solid var(--border); color:var(--text); border-radius:6px; padding:3px 6px; font-family:'JetBrains Mono',monospace; font-size:11px;}
+  .rb-right input[type=number]:focus{outline:none; border-color:var(--accent);}
+  .score-pill{display:inline-block; min-width:26px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:800; padding:1px 6px; border-radius:6px; cursor:help;}
+  .score-pill.s-hi{background:var(--up-dim); color:var(--up); border:1px solid rgba(52,211,153,.4);}
+  .score-pill.s-mid{background:rgba(240,168,60,.15); color:var(--amber); border:1px solid rgba(240,168,60,.4);}
+  .score-pill.s-lo{background:var(--panel-2); color:var(--muted); border:1px solid var(--border);}
+  .badge.reclaim{background:rgba(240,168,60,.15); color:var(--amber); border:1px solid rgba(240,168,60,.45);}
+  .card-btns{display:flex; align-items:center; gap:6px; flex-wrap:wrap; justify-content:flex-end;}
+  .setup-card{cursor:pointer;}
+  .setup-card .mini-chart-head{align-items:flex-start;}
+  .note{font-size:11.5px; color:var(--muted); line-height:1.5;}
+  .setup-card:hover{border-color:var(--border-soft);}
+  .setup-meta{font-size:10.5px; color:var(--muted); display:flex; gap:6px; flex-wrap:wrap; align-items:center;}
+  .setup-meta .dot{color:var(--muted-2);}
+  .h1pill{font-size:10px; font-weight:700; color:var(--muted);}
+  .arm-btn{font-family:inherit; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-2); color:var(--muted); cursor:pointer;}
+  .arm-btn:hover{color:var(--text); border-color:var(--accent);}
+  .arm-btn.active{background:var(--up-dim); border-color:var(--up); color:var(--up);}
+  .sel-sm{background:var(--panel-2); color:var(--text); border:1px solid var(--border); border-radius:6px; padding:3px 6px; font-family:inherit; font-size:11px;}
+  .tab-badge{display:inline-block; min-width:16px; padding:0 5px; margin-left:4px; border-radius:8px; background:var(--accent); color:#04201d; font-size:10px; font-weight:800; text-align:center;}
+  .toast-host{position:fixed; right:14px; bottom:14px; z-index:300; display:flex; flex-direction:column; gap:8px; max-width:min(420px, calc(100vw - 28px));}
+  .toast{background:var(--panel); border:1px solid var(--border-soft); border-left:3px solid var(--accent); color:var(--text); border-radius:8px; padding:10px 12px; font-size:12px; box-shadow:0 8px 24px rgba(0,0,0,.45); cursor:pointer;}
+  .toast.sticky{border-left-color:var(--amber);}
+  .miss-cards{display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:12px; margin-bottom:8px;}
+  .miss-card{background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:12px 14px;}
+  .miss-big{font-size:26px; font-weight:800; color:var(--text);}
+  .miss-sub{font-size:11.5px; color:var(--muted); margin:2px 0 8px;}
+  .miss-scan{display:flex; gap:6px; flex-wrap:wrap;}
+  .miss-row{display:grid; grid-template-columns:minmax(0,1.6fr) minmax(60px,1fr) 24px; align-items:center; gap:8px; font-size:11.5px; color:var(--text); padding:3px 0;}
+  .miss-bar{height:6px; border-radius:3px; background:var(--panel-2); overflow:hidden;}
+  .miss-bar i{display:block; height:100%; background:var(--amber);}
+
   /* Full chart viewer + drawing tools */
   .viewer-overlay{position:fixed; inset:0; z-index:120; background:var(--bg); display:none; flex-direction:column;}
   .viewer-overlay.open{display:flex;}
@@ -537,6 +578,9 @@
       <button class="view-tab" id="tabHeatmap">Sector Heat Map</button>
       <button class="view-tab" id="tabNearEma">🎯 Near EMA34</button>
       <button class="view-tab" id="tabBase">📦 Tight Base</button>
+      <button class="view-tab" id="tabReclaim">↗ Early Reclaim</button>
+      <button class="view-tab" id="tabArmed">🔔 Armed<span class="tab-badge" id="armedBadge" style="display:none;">0</span></button>
+      <button class="view-tab" id="tabMissed">🔍 Missed Moves</button>
     </div>
 
     <button class="pill-toggle" id="scannerToggle" title="Filter stocks that turned bullish (2 candles) in a bullish sector">
@@ -580,6 +624,15 @@
 </header>
 
 <main>
+  <div class="regime-banner" id="regimeBanner">
+    <div id="rbText">Market regime: waiting for data…</div>
+    <div class="rb-right">
+      <label>Account $ <input type="number" id="riskAcct" min="0" step="1000"></label>
+      <label>Risk % <input type="number" id="riskPct" min="0.05" max="5" step="0.05"></label>
+      <label title="Shrink position size when the market regime is weak"><input type="checkbox" id="riskScale"> scale by regime</label>
+      <button class="pill-toggle ai-btn" id="top10Btn" title="Open the 10 highest-scoring setups in the full chart viewer and flip through them with ← →">⭐ Review Top 10</button>
+    </div>
+  </div>
   <!-- Table View -->
   <div id="tableViewContainer" class="view-container active">
     <div class="table-wrap">
@@ -674,7 +727,10 @@
       <span id="baseCount">—</span>
       <div class="hm-sort-group">
         <button class="pill-toggle" id="baseStrongToggle" title="Only show setups in sectors outperforming SPY">Strong sectors only</button>
-        <span>Above rising EMA34 · tight 6-day range ≤ 2.5× ATR · within 3% of 20D high · stop under base</span>
+        <span>Sort</span>
+        <select class="sel-sm" id="baseSortSel"><option value="score">Score</option><option value="risk">Lowest risk</option><option value="status">Coiling first</option></select>
+        <button class="pill-toggle" id="armAllBtn" title="Arm every coiling setup scoring 70 or more">🎯 Arm top coiling</button>
+        <span>Above rising EMA34 · tight 6-day range ≤ 2.5× ATR · within 3% of 20D high</span>
       </div>
     </div>
     <div style="margin-bottom:12px;">
@@ -692,10 +748,12 @@
             <tr>
               <th style="text-align:left;">Symbol / Sector</th>
               <th>Status</th>
+              <th>Score</th>
               <th>Price</th>
               <th>Base Range</th>
               <th>From 20D High</th>
-              <th>Stop (Risk)</th>
+              <th>Entry → Stop (Risk)</th>
+              <th>Size</th>
               <th>vs EMA34</th>
               <th>Today</th>
             </tr>
@@ -704,6 +762,84 @@
         </table>
       </div>
     </div>
+    </div>
+  </div>
+  <!-- Early Reclaim View -->
+  <div id="reclaimViewContainer" class="view-container">
+    <div class="above-ema-controls">
+      <span id="reclaimCount">—</span>
+      <div class="hm-sort-group">
+        <span>Sort</span>
+        <select class="sel-sm" id="reclaimSortSel"><option value="score">Score</option><option value="risk">Lowest risk</option><option value="status">Most recent</option></select>
+        <button class="pill-toggle" id="reclaimStrongToggle" title="Only show setups in sectors outperforming SPY">Strong sectors only</button>
+        <span>Earliest entry: daily trend just flipped, stop under the reclaim low</span>
+      </div>
+    </div>
+    <div class="multi-chart-grid" id="reclaimGrid"></div>
+  </div>
+
+  <!-- Armed View -->
+  <div id="armedViewContainer" class="view-container">
+    <div class="above-ema-controls">
+      <span id="armedCount">—</span>
+      <div class="hm-sort-group">
+        <button class="pill-toggle" id="armedNotifyBtn">🔔 Enable alerts</button>
+        <span>Auto-check</span>
+        <select class="sel-sm" id="armedAutoSel"><option value="0">off</option><option value="1">1 min</option><option value="2">2 min</option><option value="5">5 min</option><option value="10">10 min</option></select>
+        <button class="pill-toggle" id="armedCheckBtn">↻ Check now</button>
+        <button class="pill-toggle" id="armedClearBtn">Clear finished</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <div class="scroll-region">
+        <table class="bullish-table">
+          <thead>
+            <tr>
+              <th style="text-align:left;">Symbol</th>
+              <th>Status</th>
+              <th>Entry</th>
+              <th>Stop (Risk)</th>
+              <th>Size</th>
+              <th>Last</th>
+              <th>To entry</th>
+              <th>Armed</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="armedTbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <p class="note" style="margin:10px 2px;">Alerts fire only while this page is open in a browser tab (a background tab is fine). Entry = base high + 0.1× ATR. When you reopen the app, anything that triggered while you were away is flagged on load.</p>
+  </div>
+
+  <!-- Missed Moves View -->
+  <div id="missedViewContainer" class="view-container">
+    <div class="above-ema-controls">
+      <span id="missedCount">—</span>
+      <div class="hm-sort-group">
+        <span>Move ≥</span>
+        <select class="sel-sm" id="missedGain"><option value="5">5%</option><option value="8">8%</option><option value="10">10%</option><option value="15">15%</option><option value="25">25%</option></select>
+        <span>within</span>
+        <select class="sel-sm" id="missedDays"><option value="3">3 days</option><option value="5">5 days</option><option value="10">10 days</option></select>
+      </div>
+    </div>
+    <div id="missedSummary"></div>
+    <div class="table-wrap">
+      <div class="scroll-region">
+        <table class="bullish-table">
+          <thead>
+            <tr>
+              <th style="text-align:left;">Symbol / Sector</th>
+              <th>Gain</th>
+              <th>From</th>
+              <th>Flagged by (day before)</th>
+              <th style="text-align:left;">If missed: state before the move</th>
+            </tr>
+          </thead>
+          <tbody id="missedTbody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 </main>
@@ -721,6 +857,7 @@
       <button class="view-tab active" data-tf="1D">1D</button>
     </div>
     <div class="v-actions">
+      <button class="pill-toggle" id="vArm" title="Alert me when price reaches the entry level (coiling setups)">🎯 Arm</button>
       <button class="pill-toggle" id="vCart">☆ Cart</button>
       <button class="pill-toggle ai-btn" id="vExport" title="Download chart + drawings as PNG">📸 PNG</button>
       <button class="pill-toggle" id="vCopy" title="Copy chart image to clipboard">📋 Copy</button>
@@ -819,6 +956,10 @@
     <div class="field">
       <label>Gemini API Key</label>
       <input id="settingsGeminiKey" type="password" autocomplete="off" spellcheck="false" placeholder="Gemini API Key">
+    </div>
+    <div class="field">
+      <label>FMP API Key <span style="color:var(--muted); font-weight:400;">(optional — earnings-date warnings)</span></label>
+      <input id="settingsFmpKey" type="password" autocomplete="off" spellcheck="false" placeholder="financialmodelingprep.com key">
     </div>
     <div class="field">
       <label>Alpaca API Key ID</label>
@@ -1023,6 +1164,7 @@ function openModal(){
   document.getElementById('apiSecretInput').value = c.secret;
   document.getElementById('feedInput').value = c.feed;
   document.getElementById('settingsGeminiKey').value = c.geminiKey;
+  document.getElementById('settingsFmpKey').value = localStorage.getItem('sp_fmp_key') || '';
   document.getElementById('modalErr').style.display = 'none';
   overlay.classList.add('open');
 }
@@ -1050,6 +1192,7 @@ document.getElementById('modalSave').addEventListener('click', async ()=>{
   const secret = document.getElementById('apiSecretInput').value.trim();
   const feed = document.getElementById('feedInput').value;
   const geminiKey = document.getElementById('settingsGeminiKey').value.trim();
+  try{ localStorage.setItem('sp_fmp_key', document.getElementById('settingsFmpKey').value.trim()); EARN.ts = 0; }catch(e){}
   if(!key || !secret){
     const e = document.getElementById('modalErr');
     e.textContent = 'Enter both Alpaca API key and secret.';
@@ -1727,6 +1870,7 @@ function computeAll(){
       symReturns[sym].emaRegime = ind.ema34Regime[ind.ema34Regime.length-1];
       symReturns[sym].pvtBullish = ind.bullish[ind.bullish.length-1];
       symReturns[sym].base = computeTightBase(barsBySymbol[sym], ind.ema34);
+      symReturns[sym].reclaim = computeReclaim(barsBySymbol[sym], ind.ema34);
       const lastEma34 = ind.ema34[ind.ema34.length-1];
       const lastClose = barsBySymbol[sym][barsBySymbol[sym].length-1].c;
       symReturns[sym].pctFromEma34 = lastEma34 ? (lastClose - lastEma34) / lastEma34 * 100 : null;
@@ -1800,6 +1944,7 @@ function computeAll(){
     }
   }
 
+  try{ computeMarket(); renderRegimeBanner(); checkArmedFromBars(); }catch(e){ console.warn('setup engine hook failed', e); }
   return symReturns;
 }
 
@@ -2880,21 +3025,44 @@ function renderNearEmaGrid(){
   grid.querySelectorAll('.mini-chart-box').forEach(box => multiChartObserver.observe(box));
 }
 
-// TIGHT BASE SCAN — compressed range under a recent high, above a rising EMA34
+// ===== SETUP ENGINE: Tight Base · Early Reclaim · Score · Regime · Earnings · Sizing · Armed · Missed =====
 const BASE_LEN = 6;
 const BASE_MAX_ATR = 2.5;
 const BASE_NEAR_HIGH_PCT = 3;
 const BASE_MAX_EXT_EMA = 15;
 let baseStrongOnly = false;
+let reclaimStrongOnly = false;
 let expandedBaseSym = null;
 
+function lsGet(k, def){ try{ const v = localStorage.getItem(k); return v == null ? def : JSON.parse(v); }catch(e){ return def; } }
+function lsSet(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+function round2(x){ return Math.round(x * 100) / 100; }
+function money(x){ return '$' + Number(x).toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 }); }
+function money0(x){ return '$' + Math.round(x).toLocaleString('en-US'); }
+
+let baseSort = lsGet('sp_base_sort', 'score');
+let reclaimSort = lsGet('sp_reclaim_sort', 'score');
+const RISK = Object.assign({ account:25000, riskPct:0.5, scaleRegime:true }, lsGet('sp_risk', {}));
+function saveRisk(){ lsSet('sp_risk', RISK); }
+const H1STATE = {};
+let MARKET = { ready:false, state:'unknown', mult:1, spyAbove:false, spyRising:false, breadth:0 };
+
+// ---------- indicators ----------
+function atrLast(bars){
+  const n = bars.length;
+  if(n < 16) return null;
+  const tr = bars.map((b,i)=>{ const pc = i>0 ? bars[i-1].c : b.c; return Math.max(b.h-b.l, Math.abs(b.h-pc), Math.abs(b.l-pc)); });
+  const a = ema(tr, 14)[n-1];
+  return (a && !Number.isNaN(a)) ? a : null;
+}
+
+// Tight base: compressed range under a recent high, above a rising EMA34
 function computeTightBase(bars, ema34Arr){
   const n = bars.length;
   if(n < 60 || !ema34Arr || ema34Arr.length !== n) return null;
   const last = bars[n-1];
-  const tr = bars.map((b,i)=>{ const pc = i>0 ? bars[i-1].c : b.c; return Math.max(b.h-b.l, Math.abs(b.h-pc), Math.abs(b.l-pc)); });
-  const atr = ema(tr, 14)[n-1];
-  if(!atr || Number.isNaN(atr)) return null;
+  const atr = atrLast(bars);
+  if(!atr) return null;
 
   const e = ema34Arr[n-1], e5 = ema34Arr[n-6];
   if(!(last.c > e && e > e5)) return null;
@@ -2917,33 +3085,230 @@ function computeTightBase(bars, ema34Arr){
   else if(cur.rangeAtr <= BASE_MAX_ATR){ status = 'Coiling'; base = cur; }
   if(!status) return null;
 
-  const stop = base.lo - atr * 0.25;
+  const stop = round2(base.lo - atr * 0.25);
+  const entry = round2(base.hi + atr * 0.1);
   const riskPct = (last.c - stop) / last.c * 100;
   const vol30 = bars.slice(-36, -6).reduce((a,b)=>a+(b.v||0),0) / 30;
+  const relVol = computeVolRatio(bars);
   return {
     status, baseHigh: base.hi, baseLow: base.lo, rangeAtr: base.rangeAtr,
-    distHigh, stop, riskPct, extPct, atr,
+    distHigh, stop, entry, riskPct, extPct, atr, relVol,
+    volConfirmed: status === 'Breakout' && relVol != null && relVol >= 1.5,
     volDry: vol30 ? base.vol / vol30 : null
   };
 }
 
-function getBaseList(){
+// Early reclaim: first daily close back above EMA34 after a stretch below it
+function computeReclaim(bars, e){
+  const n = bars.length;
+  if(n < 60 || !e || e.length !== n) return null;
+  const last = bars[n-1];
+  if(!(last.c > e[n-1])) return null;
+  let k = -1;
+  for(let i = n-1; i >= Math.max(1, n-5); i--){
+    if(bars[i].c > e[i] && bars[i-1].c <= e[i-1]){ k = i; break; }
+  }
+  if(k < 0) return null;
+  let below = 0;
+  for(let i = Math.max(0, k-15); i < k; i++){ if(bars[i].c < e[i]) below++; }
+  if(below < 10) return null;
+  const extPct = (last.c - e[n-1]) / e[n-1] * 100;
+  if(extPct > 8) return null;
+  if(!(e[n-1] >= e[n-4] * 0.998)) return null;
+  const atr = atrLast(bars);
+  if(!atr) return null;
+  const lowSince = Math.min(...bars.slice(Math.max(0, k-3)).map(b=>b.l));
+  const stop = round2(lowSince - atr * 0.25);
+  const riskPct = (last.c - stop) / last.c * 100;
+  if(riskPct > 12 || riskPct <= 0) return null;
+  let vs = 0, vc = 0;
+  for(let i = Math.max(0, k-30); i < k; i++){ vs += bars[i].v || 0; vc++; }
+  const relVol = (vc && vs) ? (bars[k].v || 0) / (vs / vc) : null;
+  return { status:'Reclaim', daysAgo:n-1-k, barsBelow:below, extPct, stop, riskPct, atr, relVol, baseLow:lowSince, baseHigh:null, entry:last.c };
+}
+
+// ---------- market regime ----------
+function computeMarket(){
+  const spy = barsBySymbol['SPY'];
+  MARKET = { ready:false, state:'unknown', mult:1, spyAbove:false, spyRising:false, breadth:0 };
+  if(!spy || spy.length < 40) return;
+  const c = spy.map(b=>b.c), e = ema(c, 34), n = c.length;
+  MARKET.spyAbove = c[n-1] > e[n-1];
+  MARKET.spyRising = e[n-1] > e[n-6];
+  let above = 0, tot = 0;
+  for(const sym of ALL_SYMBOLS){
+    if(TICKER_SECTOR[sym] === 'ETF/Index') continue;
+    const r = symReturns[sym];
+    if(!r || r.pctFromEma34 == null) continue;
+    tot++; if(r.pctFromEma34 > 0) above++;
+  }
+  MARKET.breadth = tot ? above / tot * 100 : 0;
+  const pts = (MARKET.spyAbove ? 1 : 0) + (MARKET.spyRising ? 1 : 0) + (MARKET.breadth >= 50 ? 1 : 0);
+  MARKET.state = pts === 3 ? 'on' : (pts === 2 ? 'caution' : 'off');
+  MARKET.mult = MARKET.state === 'on' ? 1 : (MARKET.state === 'caution' ? 0.5 : 0.25);
+  MARKET.ready = true;
+}
+function renderRegimeBanner(){
+  const el = document.getElementById('rbText');
+  if(!el) return;
+  if(!MARKET.ready){ el.textContent = 'Market regime: waiting for SPY data…'; return; }
+  const lab = { on:'RISK-ON', caution:'CAUTION', off:'RISK-OFF' }[MARKET.state];
+  el.innerHTML = `<span class="rb-state rb-${MARKET.state}">${lab}</span>SPY ${MARKET.spyAbove ? 'above' : 'below'} ${MARKET.spyRising ? 'rising' : 'falling'} EMA34 · ${MARKET.breadth.toFixed(0)}% of stocks above EMA34 · suggested size ×${MARKET.mult}`;
+}
+
+// ---------- position sizing ----------
+function entryOf(b, r){ return b.status === 'Coiling' ? b.entry : r.lastPrice; }
+function sizeFor(entry, stop){
+  const rps = entry - stop;
+  if(!(rps > 0) || !(entry > 0)) return null;
+  const mult = RISK.scaleRegime && MARKET.ready ? MARKET.mult : 1;
+  const riskDollars = RISK.account * RISK.riskPct / 100 * mult;
+  let shares = Math.floor(riskDollars / rps);
+  const cap = Math.floor(RISK.account / entry);
+  const capped = shares > cap;
+  if(capped) shares = cap;
+  return { shares, value: shares * entry, riskDollars: shares * rps, capped };
+}
+function sizeText(sz){
+  if(!sz) return '—';
+  if(sz.shares < 1) return '0 sh';
+  return `${sz.shares.toLocaleString()} sh · ${money0(sz.value)}${sz.capped ? ' (cap)' : ''}`;
+}
+
+// ---------- earnings (optional FMP key) ----------
+let EARN = lsGet('sp_earn', { ts:0, map:{} });
+function earnDays(sym){
+  const d = EARN.map && EARN.map[sym];
+  if(!d) return null;
+  const t = Date.parse(d + 'T00:00:00');
+  if(Number.isNaN(t)) return null;
+  const now = new Date(); now.setHours(0,0,0,0);
+  const days = Math.round((t - now.getTime()) / 864e5);
+  return days < 0 ? null : days;
+}
+function earnBadge(sym){
+  const d = earnDays(sym);
+  if(d == null || d > 5) return '';
+  return `<span class="badge chase-high" title="Earnings in ${d} day${d===1?'':'s'} — a gap can jump your stop">⚠ ER ${d === 0 ? 'today' : d + 'd'}</span>`;
+}
+async function loadEarnings(force){
+  const key = (localStorage.getItem('sp_fmp_key') || '').trim();
+  if(!key) return;
+  if(!force && Date.now() - EARN.ts < 12 * 3600e3) return;
+  const from = fmtDate(new Date()), to = fmtDate(new Date(Date.now() + 14 * 864e5));
+  const urls = [
+    `https://financialmodelingprep.com/stable/earnings-calendar?from=${from}&to=${to}&apikey=${encodeURIComponent(key)}`,
+    `https://financialmodelingprep.com/api/v3/earning_calendar?from=${from}&to=${to}&apikey=${encodeURIComponent(key)}`
+  ];
+  const universe = new Set(ALL_SYMBOLS);
+  for(const url of urls){
+    try{
+      const res = await fetch(url);
+      if(!res.ok) continue;
+      const data = await res.json();
+      if(!Array.isArray(data)) continue;
+      const map = {};
+      for(const row of data){
+        const s = row.symbol, d = (row.date || '').slice(0,10);
+        if(!s || !d || !universe.has(s)) continue;
+        if(!map[s] || d < map[s]) map[s] = d;
+      }
+      EARN = { ts:Date.now(), map };
+      lsSet('sp_earn', EARN);
+      rerenderActiveView();
+      return;
+    }catch(e){ /* try next endpoint */ }
+  }
+}
+
+// ---------- setup score (0-100) ----------
+function clamp01(x){ return Math.max(0, Math.min(1, x)); }
+function scoreSetup(item){
+  const { sym, sector, r, b, kind } = item;
+  const d = groupData[sector] || {};
+  const p = {};
+  p.sector = d.sectorStrong ? 20 : (d.turningBullish ? 8 : 0);
+  p.rs = r.rsM1 == null ? 0 : Math.round(clamp01(r.rsM1 / 15) * 20);
+  if(kind === 'base'){
+    p.shape = Math.round(clamp01(1 - b.rangeAtr / BASE_MAX_ATR) * 15);
+    if(b.status === 'Breakout') p.volume = (b.relVol != null && b.relVol >= 1.5) ? 15 : ((b.relVol != null && b.relVol >= 1) ? 8 : 0);
+    else p.volume = b.volDry != null ? (b.volDry <= 0.8 ? 15 : (b.volDry <= 1 ? 8 : 0)) : 0;
+  } else {
+    p.shape = Math.round(clamp01(1 - b.extPct / 8) * 15);
+    p.volume = b.relVol != null ? (b.relVol >= 1.5 ? 15 : (b.relVol >= 1 ? 10 : 4)) : 4;
+  }
+  const h1 = H1STATE[sym];
+  p.trend = 10 + (h1 === 'up' ? 10 : (h1 === 'down' ? 0 : 5));
+  const rk = item.riskPct != null ? item.riskPct : b.riskPct;
+  p.risk = rk <= 3 ? 10 : (rk <= 5 ? 6 : (rk <= 8 ? 2 : 0));
+  const ed = earnDays(sym);
+  p.earnings = (ed != null && ed <= 5) ? -25 : 0;
+  p.regime = MARKET.state === 'off' ? -10 : 0;
+  p.extended = (kind === 'base' && b.extPct > 10) ? -5 : 0;
+  const total = Math.max(0, Math.min(100, Object.values(p).reduce((a,x)=>a+x, 0)));
+  return { score: Math.round(total), parts: p };
+}
+function scorePill(item){
+  const s = item.score, cls = s >= 70 ? 's-hi' : (s >= 50 ? 's-mid' : 's-lo');
+  const tip = Object.entries(item.parts).map(([k,v])=>`${k} ${v>0?'+':''}${v}`).join(' · ');
+  return `<span class="score-pill ${cls}" title="${tip}">${s}</span>`;
+}
+
+// ---------- setup lookup + items ----------
+function setupFor(sym, kind){
+  const r = symReturns[sym];
+  if(!r) return null;
+  const b = kind === 'reclaim' ? r.reclaim : (kind === 'base' ? r.base : (r.base || r.reclaim));
+  if(!b) return null;
+  return { kind: b === r.reclaim ? 'reclaim' : 'base', b, r };
+}
+function setupItems(kind, ignoreFilter){
   const list = [];
+  const strongOnly = !ignoreFilter && (kind === 'base' ? baseStrongOnly : reclaimStrongOnly);
   for(const [sec, d] of Object.entries(groupData)){
-    if(baseStrongOnly && !d.sectorStrong) continue;
+    if(strongOnly && !d.sectorStrong) continue;
     for(const [sym, r] of Object.entries(d.tickers)){
-      if(!r.base) continue;
+      const b = kind === 'base' ? r.base : r.reclaim;
+      if(!b) continue;
       if(r.lastPrice < MIN_PRICE || (r.avgDollarVol != null && r.avgDollarVol < MIN_AVG_DOLLAR_VOL)) continue;
-      list.push({ sym, sector: sec, r, b: r.base, strong: !!d.sectorStrong });
+      const item = { sym, sector: sec, r, b, kind, strong: !!d.sectorStrong };
+      const entry = entryOf(b, r);
+      item.entry = entry;
+      item.riskPct = entry > 0 ? (entry - b.stop) / entry * 100 : b.riskPct;
+      const sc = scoreSetup(item);
+      item.score = sc.score; item.parts = sc.parts;
+      item.size = sizeFor(entry, b.stop);
+      list.push(item);
     }
   }
-  list.sort((a,c)=>{
-    if(a.b.status !== c.b.status) return a.b.status === 'Coiling' ? -1 : 1;
-    return a.b.riskPct - c.b.riskPct;
+  const mode = kind === 'base' ? baseSort : reclaimSort;
+  list.sort((a, c)=>{
+    if(mode === 'risk') return a.riskPct - c.riskPct;
+    if(mode === 'status'){
+      if(kind === 'base'){
+        if(a.b.status !== c.b.status) return a.b.status === 'Coiling' ? -1 : 1;
+        return a.riskPct - c.riskPct;
+      }
+      return a.b.daysAgo - c.b.daysAgo || c.score - a.score;
+    }
+    return c.score - a.score || a.riskPct - c.riskPct;
   });
   return list;
 }
 
+function statusBadge(b){
+  if(b.status === 'Coiling') return '<span class="badge turn-hit">◼ Coiling</span>';
+  if(b.status === 'Breakout') return `<span class="badge bullish">▲ Breakout${b.volConfirmed ? ' · vol ✓' : ''}</span>`;
+  return `<span class="badge reclaim">↗ Reclaim${b.daysAgo === 0 ? ' today' : ' ' + b.daysAgo + 'd'}</span>`;
+}
+function h1Text(sym){
+  const s = H1STATE[sym];
+  return s === 'up' ? '1H ▲' : (s === 'down' ? '1H ▼' : (s === 'flat' ? '1H ▬' : ''));
+}
+function h1Pill(sym){ return `<span class="h1pill" data-h1="${sym}">${h1Text(sym)}</span>`; }
+function rvText(b){ return b.relVol != null ? `RVOL ${b.relVol.toFixed(1)}×` : ''; }
+
+// ---------- mini charts ----------
 let baseMode = (function(){ try{ return localStorage.getItem('sp_base_mode') || 'charts'; }catch(e){ return 'charts'; } })();
 const baseMini = {};
 let baseObs = null;
@@ -2952,11 +3317,22 @@ function destroyBaseMini(){
   for(const k of Object.keys(baseMini)){ try{ baseMini[k].remove(); }catch(e){} delete baseMini[k]; }
 }
 
-function mountBaseMini(el, sym){
+function addSetupLines(series, sym, kind, labels){
+  const s = setupFor(sym, kind);
+  if(!s) return;
+  const b = s.b;
+  if(s.kind === 'base'){
+    series.createPriceLine({ price:b.baseHigh, color:'#9aa4b2', lineWidth:1, lineStyle:2, axisLabelVisible:labels, title:labels ? 'Base H' : '' });
+    series.createPriceLine({ price:b.baseLow, color:'#9aa4b2', lineWidth:1, lineStyle:2, axisLabelVisible:labels, title:labels ? 'Base L' : '' });
+    if(b.status === 'Coiling') series.createPriceLine({ price:b.entry, color:'#34d399', lineWidth:1, lineStyle:2, axisLabelVisible:true, title:'Entry' });
+  }
+  series.createPriceLine({ price:b.stop, color:'#f87171', lineWidth:1, lineStyle:2, axisLabelVisible:true, title:'Stop' });
+}
+
+function mountSetupMini(el, sym, kind){
   if(typeof LightweightCharts === 'undefined') return null;
   const bars = barsBySymbol[sym];
   if(!bars || bars.length < 40) return null;
-  const b = symReturns[sym] && symReturns[sym].base;
   const ind = computeChartIndicators(bars);
   const chart = LightweightCharts.createChart(el, {
     autoSize: true, handleScroll:false, handleScale:false,
@@ -2983,105 +3359,158 @@ function mountBaseMini(el, sym){
       rs = i;
     }
   }
-  if(b){
-    cs.createPriceLine({ price:b.baseHigh, color:'#9aa4b2', lineWidth:1, lineStyle:2, axisLabelVisible:false, title:'' });
-    cs.createPriceLine({ price:b.baseLow, color:'#9aa4b2', lineWidth:1, lineStyle:2, axisLabelVisible:false, title:'' });
-    cs.createPriceLine({ price:b.stop, color:'#f87171', lineWidth:1, lineStyle:2, axisLabelVisible:true, title:'Stop' });
-  }
+  addSetupLines(cs, sym, kind, false);
   chart.timeScale().fitContent();
   return chart;
 }
 
-function renderBaseGrid(list){
-  const grid = document.getElementById('baseChartsGrid');
-  if(!list.length){
-    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">No tight bases right now${baseStrongOnly ? ' in strong sectors — turn off "Strong sectors only" to widen the scan' : ''}.</div>`;
-    return;
-  }
-  grid.innerHTML = list.map((item, i) => {
-    const { sym, sector, r, b } = item;
-    const inCart = watchlistCart.has(sym);
-    const badge = b.status === 'Coiling' ? '<span class="badge turn-hit">◼ Coiling</span>' : '<span class="badge bullish">▲ Breakout</span>';
-    return `<div class="mini-chart-card base-card" data-sym="${sym}" data-i="${i}">
-      <div class="mini-chart-head">
-        <div><span class="mini-chart-sym">${sym}</span> <span class="mini-chart-sector">${sector}${item.strong ? ' · strong' : ''}</span></div>
-        <div style="display:flex; align-items:center; gap:6px;">
-          ${badge}
-          <span class="mono" style="font-size:11px; color:var(--down);">stop −${b.riskPct.toFixed(1)}%</span>
-          <button class="cart-btn ${inCart?'active':''}" data-cart-sym="${sym}" title="Add to watchlist cart">${inCart?'★':'☆'}</button>
-          <button class="chart-nav-btn" data-open="${i}" title="Open full chart with drawing tools">⤢</button>
-        </div>
-      </div>
-      <div class="mini-chart-box loading" style="height:200px;" id="baseMini_${sym}" data-sym="${sym}">loading…</div>
-    </div>`;
-  }).join('');
-
-  const syms = list.map(x => x.sym);
-  grid.querySelectorAll('.base-card').forEach(card => {
-    card.addEventListener('click', (e) => {
-      const cb = e.target.closest('.cart-btn');
-      if(cb){
-        e.stopPropagation();
-        const s = cb.getAttribute('data-cart-sym');
-        if(watchlistCart.has(s)) watchlistCart.delete(s); else watchlistCart.add(s);
-        saveCart();
-        cb.textContent = watchlistCart.has(s) ? '★' : '☆';
-        cb.classList.toggle('active', watchlistCart.has(s));
-        return;
-      }
-      openViewer(syms, parseInt(card.getAttribute('data-i'), 10));
-    });
-  });
-
+function observeMini(grid){
   baseObs = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if(!entry.isIntersecting) return;
-      const box = entry.target, sym = box.getAttribute('data-sym');
+      const box = entry.target, sym = box.getAttribute('data-sym'), kind = box.getAttribute('data-kind');
       baseObs.unobserve(box);
-      if(baseMini[sym]) return;
+      const key = kind + ':' + sym;
+      if(baseMini[key]) return;
       box.classList.remove('loading'); box.textContent = '';
-      try{ const ch = mountBaseMini(box, sym); if(ch) baseMini[sym] = ch; }catch(e){ box.textContent = 'chart error'; }
+      try{ const ch = mountSetupMini(box, sym, kind); if(ch) baseMini[key] = ch; }catch(e){ box.textContent = 'chart error'; }
     });
   }, { root:null, rootMargin:'300px 0px', threshold:0.01 });
   grid.querySelectorAll('.mini-chart-box').forEach(box => baseObs.observe(box));
 }
 
+// ---------- arm / cart controls shared by grids ----------
+function armBtnHTML(item){
+  if(item.kind !== 'base' || item.b.status !== 'Coiling') return '';
+  const on = isArmed(item.sym);
+  return `<button class="arm-btn ${on?'active':''}" data-arm="${item.sym}" title="${on ? 'Armed — click to disarm' : 'Alert me when price reaches the entry level'}">${on ? '🔔 Armed' : '🎯 Arm'}</button>`;
+}
+function cartBtnHTML(sym){
+  const inCart = watchlistCart.has(sym);
+  return `<button class="cart-btn ${inCart?'active':''}" data-cart-sym="${sym}" title="Add to watchlist cart">${inCart?'★':'☆'}</button>`;
+}
+function wireSetupClicks(root, list){
+  const syms = list.map(x=>x.sym), kinds = list.map(x=>x.kind);
+  root.onclick = (e)=>{
+    const arm = e.target.closest('[data-arm]');
+    if(arm){ e.stopPropagation(); toggleArm(arm.getAttribute('data-arm')); return; }
+    const cb = e.target.closest('.cart-btn');
+    if(cb){
+      e.stopPropagation();
+      const s = cb.getAttribute('data-cart-sym');
+      if(watchlistCart.has(s)) watchlistCart.delete(s); else watchlistCart.add(s);
+      saveCart();
+      document.querySelectorAll(`.cart-btn[data-cart-sym="${s}"]`).forEach(x=>{ x.textContent = watchlistCart.has(s) ? '★' : '☆'; x.classList.toggle('active', watchlistCart.has(s)); });
+      return;
+    }
+    const op = e.target.closest('[data-open-i]');
+    if(op){ e.stopPropagation(); openViewer(syms, parseInt(op.getAttribute('data-open-i'), 10), kinds); return; }
+    const card = e.target.closest('.setup-card');
+    if(card){ openViewer(syms, parseInt(card.getAttribute('data-i'), 10), kinds); return; }
+    const row = e.target.closest('tr.group-row');
+    if(row){
+      const s = row.getAttribute('data-bsym2');
+      expandedBaseSym = expandedBaseSym === s ? null : s;
+      renderBaseScan();
+    }
+  };
+}
+
+function cardHTML(item, i){
+  const { sym, sector, r, b, kind } = item;
+  const parts = [];
+  if(kind === 'base' && b.status === 'Coiling') parts.push(`entry ${money(b.entry)}`);
+  parts.push(`stop ${money(b.stop)} <span style="color:var(--down);">(−${item.riskPct.toFixed(1)}%)</span>`);
+  const rv = rvText(b); if(rv) parts.push(rv);
+  parts.push(sizeText(item.size));
+  return `<div class="mini-chart-card setup-card" data-sym="${sym}" data-i="${i}">
+    <div class="mini-chart-head">
+      <div><span class="mini-chart-sym">${sym}</span> <span class="mini-chart-sector">${sector}${item.strong ? ' · strong' : ''}</span></div>
+      <div class="card-btns">
+        ${scorePill(item)}${statusBadge(b)}${armBtnHTML(item)}${cartBtnHTML(sym)}
+        <button class="chart-nav-btn" data-open-i="${i}" title="Open full chart with drawing tools">⤢</button>
+      </div>
+    </div>
+    <div class="setup-meta mono">${parts.join('<span class="dot">·</span>')} ${earnBadge(sym)} ${h1Pill(sym)}</div>
+    <div class="mini-chart-box loading" style="height:190px;" data-sym="${sym}" data-kind="${kind}">loading…</div>
+  </div>`;
+}
+
+function renderSetupGrid(grid, list, emptyMsg){
+  if(!list.length){
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">${emptyMsg}</div>`;
+    grid.onclick = null;
+    return;
+  }
+  grid.innerHTML = list.map(cardHTML).join('');
+  wireSetupClicks(grid, list);
+  observeMini(grid);
+}
+
+// ---------- 1H confirmation (lazy, top setups only) ----------
+function computeH1(s){
+  const bars = barsBySymbol1H[s];
+  if(!bars || bars.length < 40){ H1STATE[s] = null; return; }
+  const c = bars.map(b=>b.c), e = ema(c, 34), n = c.length;
+  H1STATE[s] = (c[n-1] > e[n-1] && e[n-1] > e[n-11]) ? 'up' : (c[n-1] < e[n-1] ? 'down' : 'flat');
+}
+async function enrichH1(items){
+  const creds = getCreds();
+  if(!creds.key || !creds.secret) return;
+  const todo = items.map(i=>i.sym).filter((s, i, a)=> a.indexOf(s) === i && H1STATE[s] === undefined).slice(0, 40);
+  if(!todo.length) return;
+  let idx = 0;
+  const worker = async()=>{
+    while(idx < todo.length){
+      const s = todo[idx++];
+      try{ await ensureHourlyBars(s, false); }catch(e){}
+      computeH1(s);
+      document.querySelectorAll(`[data-h1="${s}"]`).forEach(el => { el.textContent = h1Text(s); });
+    }
+  };
+  await Promise.all([worker(), worker(), worker()]);
+  if((activeView === 'base' || activeView === 'reclaim') && !V.open && window.scrollY < 200) rerenderActiveView();
+}
+
+// ---------- Tight Base view ----------
 function renderBaseList(list){
   const tbody = document.getElementById('baseTbody');
   if(!list.length){
-    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state">No tight bases right now${baseStrongOnly ? ' in strong sectors — turn off "Strong sectors only" to widen the scan' : ''}.</div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state">No tight bases right now${baseStrongOnly ? ' in strong sectors — turn off "Strong sectors only" to widen the scan' : ''}.</div></td></tr>`;
+    tbody.onclick = null;
     return;
   }
-  const syms = list.map(x => x.sym);
   let html = '', panel = null;
-  for(const item of list){
+  list.forEach((item, i) => {
     const { sym, sector, r, b } = item;
     const isOpen = expandedBaseSym === sym;
-    const inCart = watchlistCart.has(sym);
-    const statusBadge = b.status === 'Coiling' ? '<span class="badge turn-hit">◼ Coiling</span>' : '<span class="badge bullish">▲ Breakout</span>';
     html += `<tr class="group-row${isOpen?' expanded':''}" data-bsym2="${sym}">
       <td><div class="group-name">
         <span class="chev">▸</span>
-        <button class="cart-btn ${inCart?'active':''}" data-cart-sym="${sym}">${inCart?'★':'☆'}</button>
+        ${cartBtnHTML(sym)}
         <span class="sym" style="font-weight:700; font-family:'JetBrains Mono',monospace;">${sym}</span>
         <span style="color:var(--muted); font-size:11px;">(${sector})</span>
         ${item.strong ? '<span class="badge rank">Strong sector</span>' : ''}
-        <button class="chart-nav-btn" data-open-sym="${sym}" title="Open full chart with drawing tools">⤢</button>
+        ${earnBadge(sym)}
+        <button class="chart-nav-btn" data-open-i="${i}" title="Open full chart with drawing tools">⤢</button>
+        ${armBtnHTML(item)}
       </div></td>
-      <td>${statusBadge}</td>
-      <td class="mono">$${r.lastPrice.toFixed(2)}</td>
-      <td class="mono">${b.rangeAtr.toFixed(1)}× ATR${b.volDry != null ? ` <span style="color:var(--muted);">· vol ${b.volDry.toFixed(1)}×</span>` : ''}</td>
+      <td>${statusBadge(b)}</td>
+      <td>${scorePill(item)}</td>
+      <td class="mono">${money(r.lastPrice)}</td>
+      <td class="mono">${b.rangeAtr.toFixed(1)}× ATR${b.volDry != null ? ` <span style="color:var(--muted);">· dry ${b.volDry.toFixed(1)}×</span>` : ''}${b.relVol != null ? ` <span style="color:var(--muted);">· ${rvText(b)}</span>` : ''}</td>
       <td class="mono">${b.distHigh.toFixed(1)}%</td>
-      <td class="mono">$${b.stop.toFixed(2)} <span style="color:var(--down);">(−${b.riskPct.toFixed(1)}%)</span></td>
+      <td class="mono">${b.status === 'Coiling' ? `<span style="color:var(--up);">${money(b.entry)}</span> → ` : ''}${money(b.stop)} <span style="color:var(--down);">(−${item.riskPct.toFixed(1)}%)</span></td>
+      <td class="mono">${sizeText(item.size)}</td>
       <td class="mono">${b.extPct>=0?'+':''}${b.extPct.toFixed(1)}%</td>
       <td>${pctSpan(r.today)}</td>
     </tr>`;
     if(isOpen){
       if(barsBySymbol[sym] && barsBySymbol[sym].length >= 40) panel = { sym, bars: barsBySymbol[sym] };
-      html += `<tr class="chart-row"><td colspan="8">
+      html += `<tr class="chart-row"><td colspan="10">
         <div class="chart-panel">
           <div class="chart-panel-head">
-            <span class="chart-title">${sector} · <strong style="color:var(--text);">${sym}</strong> · Base $${b.baseLow.toFixed(2)} – $${b.baseHigh.toFixed(2)} · Stop $${b.stop.toFixed(2)}</span>
+            <span class="chart-title">${sector} · <strong style="color:var(--text);">${sym}</strong> · Base ${money(b.baseLow)} – ${money(b.baseHigh)} · Stop ${money(b.stop)}</span>
             ${pctSpan(r.today)}
           </div>
           <div class="chart-tf-block" style="min-width:100%;">
@@ -3091,35 +3520,325 @@ function renderBaseList(list){
         </div>
       </td></tr>`;
     }
-  }
+  });
   tbody.innerHTML = html;
   if(panel) mountTimeframeChart('d', 'baseLwcPriceD', 'baseLwcLowerD', 'baseStatTrendD', 'baseStatPvtD', panel.bars, 60);
-
-  tbody.querySelectorAll('tr.group-row').forEach(row=>{
-    row.addEventListener('click', ()=>{
-      const sym = row.getAttribute('data-bsym2');
-      expandedBaseSym = expandedBaseSym === sym ? null : sym;
-      renderBaseScan();
-    });
-  });
-  tbody.querySelectorAll('.cart-btn').forEach(btn=>{
-    btn.addEventListener('click', (e)=>{ e.stopPropagation(); toggleCartSymbol(btn.getAttribute('data-cart-sym')); });
-  });
-  tbody.querySelectorAll('[data-open-sym]').forEach(btn=>{
-    btn.addEventListener('click', (e)=>{ e.stopPropagation(); openViewer(syms, syms.indexOf(btn.getAttribute('data-open-sym'))); });
-  });
+  wireSetupClicks(tbody, list);
 }
 
 function renderBaseScan(){
   destroyLiveCharts();
   destroyBaseMini();
-  const list = getBaseList();
+  const list = setupItems('base');
   const coil = list.filter(x=>x.b.status==='Coiling').length;
   document.getElementById('baseCount').textContent = `${list.length} setup${list.length===1?'':'s'} · ${coil} coiling, ${list.length-coil} breaking out`;
   document.getElementById('baseChartsGrid').style.display = baseMode === 'charts' ? '' : 'none';
   document.getElementById('baseListWrap').style.display = baseMode === 'list' ? '' : 'none';
   document.querySelectorAll('#baseModeSwitch .view-tab').forEach(b => b.classList.toggle('active', b.getAttribute('data-mode') === baseMode));
-  if(baseMode === 'charts') renderBaseGrid(list); else renderBaseList(list);
+  const sel = document.getElementById('baseSortSel'); if(sel) sel.value = baseSort;
+  const empty = `No tight bases right now${baseStrongOnly ? ' in strong sectors — turn off "Strong sectors only" to widen the scan' : ''}.`;
+  if(baseMode === 'charts') renderSetupGrid(document.getElementById('baseChartsGrid'), list, empty);
+  else renderBaseList(list);
+  enrichH1(list.slice(0, 40));
+}
+
+// ---------- Early Reclaim view ----------
+function renderReclaimScan(){
+  destroyLiveCharts();
+  destroyBaseMini();
+  const list = setupItems('reclaim');
+  document.getElementById('reclaimCount').textContent = `${list.length} reclaim${list.length===1?'':'s'} · first close above EMA34 in the last 5 days after 10+ closes below`;
+  const sel = document.getElementById('reclaimSortSel'); if(sel) sel.value = reclaimSort;
+  renderSetupGrid(document.getElementById('reclaimGrid'), list, `No early reclaims right now${reclaimStrongOnly ? ' in strong sectors — turn off "Strong sectors only" to widen the scan' : ''}.`);
+  enrichH1(list.slice(0, 40));
+}
+
+function itemFor(sym, kind){
+  const su = setupFor(sym, kind);
+  if(!su) return null;
+  const sector = TICKER_SECTOR[sym], d = groupData[sector] || {};
+  const item = { sym, sector, r:su.r, b:su.b, kind:su.kind, strong:!!d.sectorStrong };
+  item.entry = entryOf(su.b, su.r);
+  item.riskPct = item.entry > 0 ? (item.entry - su.b.stop) / item.entry * 100 : su.b.riskPct;
+  const sc = scoreSetup(item); item.score = sc.score; item.parts = sc.parts;
+  item.size = sizeFor(item.entry, su.b.stop);
+  return item;
+}
+
+// ---------- Review Top 10 ----------
+function reviewTop10(){
+  const all = [...setupItems('base', true), ...setupItems('reclaim', true)].sort((a, c)=> c.score - a.score);
+  const seen = new Set(), top = [];
+  for(const it of all){ if(seen.has(it.sym)) continue; seen.add(it.sym); top.push(it); if(top.length === 10) break; }
+  if(!top.length){ toast('No setups to review yet — load data first.'); return; }
+  openViewer(top.map(x=>x.sym), 0, top.map(x=>x.kind));
+}
+
+// ---------- toast ----------
+function toast(msg, sticky){
+  let host = document.getElementById('toastHost');
+  if(!host){ host = document.createElement('div'); host.id = 'toastHost'; host.className = 'toast-host'; document.body.appendChild(host); }
+  const t = document.createElement('div');
+  t.className = 'toast' + (sticky ? ' sticky' : '');
+  t.textContent = msg;
+  t.addEventListener('click', ()=> t.remove());
+  host.appendChild(t);
+  if(!sticky) setTimeout(()=>{ try{ t.remove(); }catch(e){} }, 4500);
+}
+
+// ---------- Armed triggers ----------
+let ARMED = lsGet('sp_armed', []);
+if(!Array.isArray(ARMED)) ARMED = [];
+let armedTimer = null;
+function waitingCount(){ return ARMED.filter(a=>a.status === 'waiting').length; }
+function saveArmed(){
+  lsSet('sp_armed', ARMED);
+  const el = document.getElementById('armedBadge');
+  if(el){ const n = waitingCount(); el.textContent = n; el.style.display = n ? '' : 'none'; }
+}
+function isArmed(sym){ return ARMED.some(a => a.sym === sym && a.status === 'waiting'); }
+function armSymbol(sym){
+  const r = symReturns[sym], b = r && r.base;
+  if(!b || b.status !== 'Coiling'){ toast(`${sym} is not coiling right now — nothing to arm.`); return false; }
+  ARMED = ARMED.filter(a => !(a.sym === sym && a.status === 'waiting'));
+  ARMED.push({ sym, sector: TICKER_SECTOR[sym] || '', entry:b.entry, stop:b.stop, baseHigh:b.baseHigh, baseLow:b.baseLow, armedAt:new Date().toISOString(), status:'waiting', last:r.lastPrice });
+  saveArmed();
+  return true;
+}
+function disarmSymbol(sym){
+  ARMED = ARMED.filter(a => !(a.sym === sym && a.status === 'waiting'));
+  saveArmed();
+}
+function refreshArmButtons(){
+  document.querySelectorAll('[data-arm]').forEach(btn => {
+    const on = isArmed(btn.getAttribute('data-arm'));
+    btn.classList.toggle('active', on);
+    btn.textContent = on ? '🔔 Armed' : '🎯 Arm';
+  });
+  if(typeof vUpdateArmBtn === 'function' && V.open) vUpdateArmBtn();
+}
+function toggleArm(sym){
+  if(isArmed(sym)) disarmSymbol(sym); else armSymbol(sym);
+  refreshArmButtons();
+  if(activeView === 'armed') renderArmed();
+}
+function armAllTop(minScore){
+  const list = setupItems('base', true).filter(x => x.b.status === 'Coiling' && x.score >= minScore);
+  let n = 0;
+  for(const it of list){ if(!isArmed(it.sym) && armSymbol(it.sym)) n++; }
+  refreshArmButtons();
+  toast(n ? `Armed ${n} coiling setup${n===1?'':'s'} with score ≥ ${minScore}.` : `No new coiling setups with score ≥ ${minScore}.`);
+}
+
+function evalArmed(a, bars){
+  const since = a.armedAt.slice(0, 10);
+  const recent = bars.filter(b => b.t.slice(0, 10) >= since);
+  if(!recent.length) return null;
+  const hi = Math.max(...recent.map(b => b.h));
+  const lastBar = recent[recent.length - 1];
+  if(hi >= a.entry) return { state:'triggered', last:lastBar.c, hi };
+  if(lastBar.c <= a.stop) return { state:'invalid', last:lastBar.c, hi };
+  return { state:'waiting', last:lastBar.c, hi };
+}
+function applyArmedResults(barsFor){
+  let fired = 0;
+  for(const a of ARMED){
+    if(a.status !== 'waiting') continue;
+    const bars = barsFor(a.sym);
+    if(!bars || !bars.length) continue;
+    const res = evalArmed(a, bars);
+    if(!res) continue;
+    a.last = res.last; a.lastAt = new Date().toISOString();
+    if(res.state === 'triggered'){
+      a.status = 'triggered'; a.triggeredAt = new Date().toISOString(); a.triggerLast = res.last; fired++;
+      notifyTrigger(a, res.last);
+    } else if(res.state === 'invalid'){
+      a.status = 'invalid'; a.triggeredAt = new Date().toISOString(); a.triggerLast = res.last;
+      toast(`${a.sym} closed below its stop ${money(a.stop)} before triggering — setup invalidated.`, true);
+    }
+  }
+  saveArmed();
+  refreshArmButtons();
+  if(activeView === 'armed') renderArmed();
+  return fired;
+}
+function notifyTrigger(a, price){
+  toast(`🔔 ${a.sym} reached entry ${money(a.entry)} (last ${money(price)}) · stop ${money(a.stop)}`, true);
+  try{
+    if('Notification' in window && Notification.permission === 'granted'){
+      new Notification(`${a.sym} hit entry`, { body:`Entry ${money(a.entry)} · last ${money(price)} · stop ${money(a.stop)}` });
+    }
+  }catch(e){}
+}
+function checkArmedFromBars(){
+  if(!ARMED.length) { saveArmed(); return; }
+  applyArmedResults(sym => barsBySymbol[sym]);
+}
+let armedPolling = false;
+async function pollArmed(manual){
+  const waiting = ARMED.filter(a => a.status === 'waiting');
+  if(!waiting.length){ if(manual) toast('Nothing armed yet — click 🎯 Arm on a coiling setup.'); return; }
+  const creds = getCreds();
+  if(!creds.key || !creds.secret){ if(manual) toast('Add your Alpaca keys in settings first.'); return; }
+  if(armedPolling) return;
+  armedPolling = true;
+  const btn = document.getElementById('armedCheckBtn');
+  if(btn) btn.classList.add('active');
+  try{
+    const syms = [...new Set(waiting.map(a => a.sym))];
+    const earliest = waiting.reduce((m, a) => a.armedAt < m ? a.armedAt : m, waiting[0].armedAt);
+    const start = fmtDate(new Date(Date.parse(earliest) - 3 * 864e5)), end = fmtDate(new Date());
+    const fresh = {};
+    for(let i = 0; i < syms.length; i += 40){
+      Object.assign(fresh, await fetchChunk(syms.slice(i, i + 40), start, end, creds, '1Day'));
+    }
+    const fired = applyArmedResults(sym => fresh[sym]);
+    if(manual && !fired) toast('Checked — nothing has reached its entry yet.');
+  }catch(e){
+    if(manual) toast('Check failed: ' + (e.message || e));
+  }finally{
+    armedPolling = false;
+    if(btn) btn.classList.remove('active');
+  }
+}
+function setAutoCheck(mins){
+  lsSet('sp_armed_auto', mins);
+  if(armedTimer){ clearInterval(armedTimer); armedTimer = null; }
+  if(mins > 0) armedTimer = setInterval(()=> pollArmed(false), mins * 60000);
+}
+function ensureNotifyPermission(){
+  if(!('Notification' in window)){ toast('This browser does not support notifications — you will still get in-page alerts.'); return; }
+  if(Notification.permission === 'granted'){ toast('Browser alerts are already on.'); return; }
+  Notification.requestPermission().then(p => { toast(p === 'granted' ? 'Browser alerts enabled.' : 'Alerts blocked — you will still get in-page alerts.'); updateNotifyBtn(); });
+}
+function updateNotifyBtn(){
+  const b = document.getElementById('armedNotifyBtn');
+  if(!b) return;
+  const on = 'Notification' in window && Notification.permission === 'granted';
+  b.classList.toggle('active', on);
+  b.textContent = on ? '🔔 Alerts on' : '🔔 Enable alerts';
+}
+
+function renderArmed(){
+  destroyLiveCharts(); destroyBaseMini();
+  const tbody = document.getElementById('armedTbody');
+  const waiting = ARMED.filter(a => a.status === 'waiting').length;
+  document.getElementById('armedCount').textContent = `${waiting} waiting · ${ARMED.length - waiting} finished`;
+  document.getElementById('armedAutoSel').value = String(lsGet('sp_armed_auto', 0));
+  updateNotifyBtn();
+  if(!ARMED.length){
+    tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state">Nothing armed. On the 📦 Tight Base tab, click <b>🎯 Arm</b> on a coiling setup — or use <b>Arm top coiling</b> — and you will be alerted when price reaches the entry.</div></td></tr>';
+    tbody.onclick = null;
+    return;
+  }
+  const order = { waiting:0, triggered:1, invalid:2 };
+  const rows = ARMED.map((a, i) => ({ a, i })).sort((x, y) => order[x.a.status] - order[y.a.status] || (y.a.armedAt > x.a.armedAt ? 1 : -1));
+  const syms = rows.map(x => x.a.sym);
+  tbody.innerHTML = rows.map(({ a, i }, k) => {
+    const r = symReturns[a.sym];
+    const last = a.last != null ? a.last : (r ? r.lastPrice : null);
+    const toEntry = last != null ? (a.entry - last) / last * 100 : null;
+    const sz = sizeFor(a.entry, a.stop);
+    const rk = (a.entry - a.stop) / a.entry * 100;
+    const st = a.status === 'waiting' ? '<span class="badge turn-hit">⏳ Waiting</span>'
+      : a.status === 'triggered' ? `<span class="badge bullish" title="${a.triggeredAt}">✅ Triggered</span>`
+      : '<span class="badge chase-high">✖ Invalidated</span>';
+    const when = new Date(a.armedAt).toLocaleString('en-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
+    return `<tr class="group-row" data-armed-i="${i}">
+      <td><div class="group-name"><span class="sym" style="font-weight:700; font-family:'JetBrains Mono',monospace;">${a.sym}</span> <span style="color:var(--muted); font-size:11px;">(${a.sector})</span> ${earnBadge(a.sym)}</div></td>
+      <td>${st}</td>
+      <td class="mono" style="color:var(--up);">${money(a.entry)}</td>
+      <td class="mono">${money(a.stop)} <span style="color:var(--down);">(−${rk.toFixed(1)}%)</span></td>
+      <td class="mono">${sizeText(sz)}</td>
+      <td class="mono">${last != null ? money(last) : '—'}</td>
+      <td class="mono">${a.status === 'waiting' && toEntry != null ? (toEntry > 0 ? '+' : '') + toEntry.toFixed(1) + '% to go' : '—'}</td>
+      <td class="mono" style="color:var(--muted);">${when}</td>
+      <td style="white-space:nowrap;"><button class="chart-nav-btn" data-open-i="${k}" title="Open chart">⤢</button> <button class="chart-nav-btn" data-del-armed="${i}" title="Remove">✕</button></td>
+    </tr>`;
+  }).join('');
+  tbody.onclick = (e)=>{
+    const del = e.target.closest('[data-del-armed]');
+    if(del){ e.stopPropagation(); ARMED.splice(parseInt(del.getAttribute('data-del-armed'), 10), 1); saveArmed(); refreshArmButtons(); renderArmed(); return; }
+    const op = e.target.closest('[data-open-i]');
+    if(op){ openViewer(syms, parseInt(op.getAttribute('data-open-i'), 10), null); }
+  };
+}
+
+// ---------- Missed-move review ----------
+const MISS = Object.assign({ days:5, minGain:8 }, lsGet('sp_miss', {}));
+const SCAN_NAMES = ['Tight Base', 'Early Reclaim', 'Near EMA34', '2-Candle Turn'];
+function computeMissed(){
+  const rows = [], k = MISS.days;
+  for(const sym of ALL_SYMBOLS){
+    const sector = TICKER_SECTOR[sym];
+    if(sector === 'ETF/Index') continue;
+    const bars = barsBySymbol[sym], r = symReturns[sym];
+    if(!bars || bars.length < 70 + k || !r) continue;
+    if(r.lastPrice < MIN_PRICE || (r.avgDollarVol != null && r.avgDollarVol < MIN_AVG_DOLLAR_VOL)) continue;
+    const n = bars.length, p0 = bars[n-1-k].c;
+    if(!p0) continue;
+    const gain = (bars[n-1].c - p0) / p0 * 100;
+    if(gain < MISS.minGain) continue;
+    const prev = bars.slice(0, n - k), closes = prev.map(b => b.c), e = ema(closes, 34), m = prev.length;
+    const flags = [];
+    try{ if(computeTightBase(prev, e)) flags.push('Tight Base'); }catch(x){}
+    try{ if(computeReclaim(prev, e)) flags.push('Early Reclaim'); }catch(x){}
+    const pct = (closes[m-1] - e[m-1]) / e[m-1] * 100;
+    if(Math.abs(pct) <= nearEmaThresholdPct) flags.push('Near EMA34');
+    try{ if(checkStock2CandleTurn(prev)) flags.push('2-Candle Turn'); }catch(x){}
+    let maxDay = 0;
+    for(let i = n - k; i < n; i++){ const g = (bars[i].c - bars[i-1].c) / bars[i-1].c * 100; if(g > maxDay) maxDay = g; }
+    let cat;
+    if(maxDay >= 6 && maxDay >= gain * 0.6) cat = 'One big day (gap / news)';
+    else if(pct < 0) cat = 'Below EMA34 — still in downtrend';
+    else if(pct > 15) cat = 'Already extended (>15% over EMA34)';
+    else {
+      const hh = Math.max(...prev.slice(-20).map(b => b.h));
+      cat = (hh - closes[m-1]) / hh * 100 > 3 ? 'Mid-range, more than 3% under 20D high' : 'Near highs but base not tight';
+    }
+    rows.push({ sym, sector, gain, flags, cat, missed: flags.length === 0, start: bars[n-1-k].t.slice(0, 10), maxDay });
+  }
+  rows.sort((a, c) => c.gain - a.gain);
+  return rows;
+}
+function renderMissed(){
+  destroyLiveCharts(); destroyBaseMini();
+  document.getElementById('missedGain').value = String(MISS.minGain);
+  document.getElementById('missedDays').value = String(MISS.days);
+  const rows = computeMissed();
+  const caught = rows.filter(r => !r.missed).length, missed = rows.length - caught;
+  document.getElementById('missedCount').textContent = `${rows.length} stock${rows.length===1?'':'s'} gained ≥ ${MISS.minGain}% in ${MISS.days} days`;
+  const sum = document.getElementById('missedSummary');
+  if(!rows.length){
+    sum.innerHTML = '';
+    document.getElementById('missedTbody').innerHTML = '<tr><td colspan="5"><div class="empty-state">No stocks moved that much in this window. Lower the gain or lengthen the window.</div></td></tr>';
+    document.getElementById('missedTbody').onclick = null;
+    return;
+  }
+  const byScan = SCAN_NAMES.map(nm => ({ nm, n: rows.filter(r => r.flags.includes(nm)).length }));
+  const cats = {};
+  rows.filter(r => r.missed).forEach(r => { cats[r.cat] = (cats[r.cat] || 0) + 1; });
+  const catHtml = Object.entries(cats).sort((a, b) => b[1] - a[1]).map(([c, n]) =>
+    `<div class="miss-row"><span>${c}</span><span class="miss-bar"><i style="width:${(n / Math.max(1, missed) * 100).toFixed(0)}%"></i></span><b class="mono">${n}</b></div>`).join('');
+  sum.innerHTML = `<div class="miss-cards">
+    <div class="miss-card"><div class="miss-big mono">${caught}/${rows.length}</div><div class="miss-sub">flagged by at least one scan the day before the move (${(caught / rows.length * 100).toFixed(0)}%)</div>
+      <div class="miss-scan">${byScan.map(s => `<span class="badge ${s.n ? 'turn-hit' : 'leader'}">${s.nm}: ${s.n}</span>`).join(' ')}</div></div>
+    <div class="miss-card"><div class="miss-big mono">${missed}</div><div class="miss-sub">missed — what state they were in before the move</div>${catHtml || '<div class="miss-sub">None missed in this window 🎉</div>'}</div>
+  </div>
+  <p class="note" style="margin:6px 2px 10px;">Each scan is replayed on the data as it stood ${MISS.days} days ago. Near EMA34 ignores the sector-strength filter (sector history is not replayed), so it can over-count.</p>`;
+  const syms = rows.map(r => r.sym);
+  const tbody = document.getElementById('missedTbody');
+  tbody.innerHTML = rows.map((r, i) => `<tr class="group-row" data-open-i="${i}">
+    <td><div class="group-name"><span class="sym" style="font-weight:700; font-family:'JetBrains Mono',monospace;">${r.sym}</span> <span style="color:var(--muted); font-size:11px;">(${r.sector})</span></div></td>
+    <td class="mono" style="color:var(--up);">+${r.gain.toFixed(1)}%</td>
+    <td class="mono" style="color:var(--muted);">${r.start}</td>
+    <td>${r.flags.length ? r.flags.map(f => `<span class="badge turn-hit">${f}</span>`).join(' ') : '<span class="badge chase-high">✖ Missed</span>'}</td>
+    <td style="color:var(--muted); font-size:11.5px;">${r.missed ? r.cat : ''}</td>
+  </tr>`).join('');
+  tbody.onclick = (e)=>{
+    const op = e.target.closest('[data-open-i]');
+    if(op) openViewer(syms, parseInt(op.getAttribute('data-open-i'), 10), null);
+  };
 }
 
 // ===== FULL CHART VIEWER + DRAWING TOOLS =====
@@ -3553,12 +4272,7 @@ function vBuildChart(sym){
       rs = i;
     }
   }
-  const b = symReturns[sym] && symReturns[sym].base;
-  if(b){
-    candle.createPriceLine({ price:b.baseHigh, color:'#9aa4b2', lineWidth:1, lineStyle:2, axisLabelVisible:true, title:'Base H' });
-    candle.createPriceLine({ price:b.baseLow, color:'#9aa4b2', lineWidth:1, lineStyle:2, axisLabelVisible:true, title:'Base L' });
-    candle.createPriceLine({ price:b.stop, color:'#f87171', lineWidth:1, lineStyle:2, axisLabelVisible:true, title:'Stop' });
-  }
+  addSetupLines(candle, sym, V.kinds ? V.kinds[V.idx] : null, true);
   const n = bars.length, show = V.tf === '1D' ? 90 : (V.tf === '4H' ? 100 : 130);
   chart.timeScale().setVisibleLogicalRange({ from:Math.max(0, n - show), to:n + 8 });
 
@@ -3580,9 +4294,11 @@ async function vLoad(){
   vById('vSym').textContent = sym;
   vById('vSector').textContent = TICKER_SECTOR[sym] || '';
   vById('vCount').textContent = `${V.idx + 1}/${V.syms.length}`;
-  vById('vStatus').innerHTML = meta.base ? (meta.base.status === 'Coiling' ? '<span class="badge turn-hit">◼ Coiling</span>' : '<span class="badge bullish">▲ Breakout</span>') : (meta.turnHit ? '<span class="badge turn-hit">★ Turn</span>' : '');
-  vById('vInfo').innerHTML = meta.lastPrice != null ? `$${meta.lastPrice.toFixed(2)} ${pctSpan(meta.today)}${meta.base ? ` <span style="color:var(--muted);">· stop $${meta.base.stop.toFixed(2)} (−${meta.base.riskPct.toFixed(1)}%)</span>` : ''}` : '';
+  const it = itemFor(sym, V.kinds ? V.kinds[V.idx] : null);
+  vById('vStatus').innerHTML = it ? (statusBadge(it.b) + ' ' + scorePill(it) + ' ' + earnBadge(sym)) : (meta.turnHit ? '<span class="badge turn-hit">★ Turn</span>' : '');
+  vById('vInfo').innerHTML = meta.lastPrice != null ? `$${meta.lastPrice.toFixed(2)} ${pctSpan(meta.today)}` + (it ? ` <span style="color:var(--muted);">· ${it.b.status === 'Coiling' ? 'entry ' + money(it.b.entry) + ' · ' : ''}stop ${money(it.b.stop)} (−${it.riskPct.toFixed(1)}%) · ${sizeText(it.size)}${rvText(it.b) ? ' · ' + rvText(it.b) : ''}</span>` : '') : '';
   vUpdateCartBtn();
+  vUpdateArmBtn();
   document.querySelectorAll('#vTfSwitch .view-tab').forEach(b => b.classList.toggle('active', b.getAttribute('data-tf') === V.tf));
   V.selected = null; V.draft = null; V.drag = null; V.history = [];
   vById('vLegend').textContent = 'Loading…';
@@ -3616,6 +4332,16 @@ function vNav(dir){
   V.idx = (V.idx + dir + V.syms.length) % V.syms.length;
   vLoad();
 }
+function vUpdateArmBtn(){
+  const sym = V.syms[V.idx], btn = vById('vArm');
+  if(!btn) return;
+  const su = setupFor(sym, V.kinds ? V.kinds[V.idx] : null);
+  const armable = !!(symReturns[sym] && symReturns[sym].base && symReturns[sym].base.status === 'Coiling');
+  btn.style.display = (armable || isArmed(sym)) ? '' : 'none';
+  const on = isArmed(sym);
+  btn.textContent = on ? '🔔 Armed' : '🎯 Arm';
+  btn.classList.toggle('active', on);
+}
 function vUpdateCartBtn(){
   const sym = V.syms[V.idx];
   const inCart = watchlistCart.has(sym);
@@ -3624,9 +4350,9 @@ function vUpdateCartBtn(){
   b.classList.toggle('active', inCart);
 }
 
-function openViewer(syms, idx){
+function openViewer(syms, idx, kinds){
   if(!syms || !syms.length) return;
-  V.syms = syms.slice(); V.idx = Math.max(0, idx || 0); V.tf = '1D'; V.open = true; V.cartDirty = false;
+  V.syms = syms.slice(); V.kinds = kinds ? kinds.slice() : null; V.idx = Math.max(0, idx || 0); V.tf = '1D'; V.open = true; V.cartDirty = false;
   vById('viewerOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
   vSetTool('pan');
@@ -3648,7 +4374,7 @@ function rerenderActiveView(){
   if(activeView === 'table') renderTable();
   else if(activeView === 'bullish') renderBullishScanner();
   else if(activeView === 'nearema') renderNearEmaGrid();
-  else if(activeView === 'base') renderBaseScan();
+  else if(activeView === 'base') renderBaseScan(); else if(activeView === 'reclaim') renderReclaimScan(); else if(activeView === 'armed') renderArmed(); else if(activeView === 'missed') renderMissed();
   else renderHeatMap();
 }
 
@@ -3663,7 +4389,7 @@ async function vMakeImage(){
   out.width = shot.width; out.height = shot.height + headerH;
   const ctx = out.getContext('2d');
   ctx.fillStyle = '#0a0e14'; ctx.fillRect(0,0,out.width,out.height);
-  const sym = V.syms[V.idx], meta = symReturns[sym] || {}, b = meta.base;
+  const sym = V.syms[V.idx], meta = symReturns[sym] || {}, su = setupFor(sym, V.kinds ? V.kinds[V.idx] : null), b = su && su.b;
   ctx.textBaseline = 'middle';
   ctx.fillStyle = '#e7ecf3'; ctx.font = `700 ${Math.round(18*scale)}px 'Space Grotesk', sans-serif`;
   ctx.fillText(sym, Math.round(14*scale), Math.round(23*scale));
@@ -3672,7 +4398,7 @@ async function vMakeImage(){
   ctx.fillText(`${TICKER_SECTOR[sym] || ''} · ${V.tf}`, Math.round(14*scale) + symW + Math.round(10*scale), Math.round(23*scale));
   ctx.textAlign = 'right';
   let right = new Date().toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
-  if(b) right = `${b.status} · Base ${vFmt(b.baseLow)}–${vFmt(b.baseHigh)} · Stop ${vFmt(b.stop)} (−${b.riskPct.toFixed(1)}%) · ${right}`;
+  if(b) right = (b.baseHigh != null ? `${b.status} · Base ${vFmt(b.baseLow)}–${vFmt(b.baseHigh)}` : `${b.status} · ${b.daysAgo}d ago`) + (b.status === 'Coiling' ? ` · Entry ${vFmt(b.entry)}` : '') + ` · Stop ${vFmt(b.stop)} (−${b.riskPct.toFixed(1)}%) · ${right}`;
   ctx.fillStyle = '#8a95a3'; ctx.fillText(right, out.width - Math.round(14*scale), Math.round(23*scale));
   ctx.textAlign = 'left';
   ctx.drawImage(shot, 0, headerH);
@@ -3774,20 +4500,26 @@ function switchView(view){
   document.getElementById('heatmapViewContainer').classList.toggle('active', activeView === 'heatmap');
   document.getElementById('nearEmaViewContainer').classList.toggle('active', activeView === 'nearema');
   document.getElementById('baseViewContainer').classList.toggle('active', activeView === 'base');
+  document.getElementById('reclaimViewContainer').classList.toggle('active', activeView === 'reclaim');
+  document.getElementById('armedViewContainer').classList.toggle('active', activeView === 'armed');
+  document.getElementById('missedViewContainer').classList.toggle('active', activeView === 'missed');
   document.getElementById('tabTable').classList.toggle('active', activeView === 'table');
   document.getElementById('tabBullish').classList.toggle('active', activeView === 'bullish');
   document.getElementById('tabHeatmap').classList.toggle('active', activeView === 'heatmap');
   document.getElementById('tabNearEma').classList.toggle('active', activeView === 'nearema');
   document.getElementById('tabBase').classList.toggle('active', activeView === 'base');
+  document.getElementById('tabReclaim').classList.toggle('active', activeView === 'reclaim');
+  document.getElementById('tabArmed').classList.toggle('active', activeView === 'armed');
+  document.getElementById('tabMissed').classList.toggle('active', activeView === 'missed');
   destroyLiveCharts();
 
   if(activeView !== 'nearema') destroyMultiCharts();
-  if(activeView !== 'base') destroyBaseMini();
+  destroyBaseMini();
 
   if(activeView === 'heatmap') renderHeatMap();
   else if(activeView === 'bullish') renderBullishScanner();
   else if(activeView === 'nearema') renderNearEmaGrid();
-  else if(activeView === 'base') renderBaseScan();
+  else if(activeView === 'base') renderBaseScan(); else if(activeView === 'reclaim') renderReclaimScan(); else if(activeView === 'armed') renderArmed(); else if(activeView === 'missed') renderMissed();
   else renderTable();
 }
 
@@ -3844,7 +4576,7 @@ function toggleCartSymbol(sym){
   if(activeView === 'table') renderTable();
   else if(activeView === 'bullish') renderBullishScanner();
   else if(activeView === 'nearema') renderNearEmaGrid();
-  else if(activeView === 'base') renderBaseScan();
+  else if(activeView === 'base') renderBaseScan(); else if(activeView === 'reclaim') renderReclaimScan(); else if(activeView === 'armed') renderArmed(); else if(activeView === 'missed') renderMissed();
   else renderHeatMap();
 }
 
@@ -3985,6 +4717,54 @@ document.querySelectorAll('#baseModeSwitch .view-tab').forEach(b=>{
   });
 });
 
+
+// ----- setup engine wiring -----
+document.getElementById('tabReclaim').addEventListener('click', () => switchView('reclaim'));
+document.getElementById('tabArmed').addEventListener('click', () => switchView('armed'));
+document.getElementById('tabMissed').addEventListener('click', () => switchView('missed'));
+document.getElementById('baseSortSel').addEventListener('change', (e)=>{ baseSort = e.target.value; lsSet('sp_base_sort', baseSort); renderBaseScan(); });
+document.getElementById('reclaimSortSel').addEventListener('change', (e)=>{ reclaimSort = e.target.value; lsSet('sp_reclaim_sort', reclaimSort); renderReclaimScan(); });
+document.getElementById('reclaimStrongToggle').addEventListener('click', ()=>{
+  reclaimStrongOnly = !reclaimStrongOnly;
+  document.getElementById('reclaimStrongToggle').classList.toggle('active', reclaimStrongOnly);
+  renderReclaimScan();
+});
+document.getElementById('armAllBtn').addEventListener('click', ()=> armAllTop(70));
+document.getElementById('top10Btn').addEventListener('click', reviewTop10);
+document.getElementById('armedNotifyBtn').addEventListener('click', ensureNotifyPermission);
+document.getElementById('armedCheckBtn').addEventListener('click', ()=> pollArmed(true));
+document.getElementById('armedClearBtn').addEventListener('click', ()=>{ ARMED = ARMED.filter(a => a.status === 'waiting'); saveArmed(); renderArmed(); });
+document.getElementById('armedAutoSel').addEventListener('change', (e)=>{
+  const m = parseInt(e.target.value, 10) || 0;
+  setAutoCheck(m);
+  if(m > 0 && 'Notification' in window && Notification.permission === 'default') ensureNotifyPermission();
+});
+document.getElementById('missedGain').addEventListener('change', (e)=>{ MISS.minGain = parseFloat(e.target.value); lsSet('sp_miss', MISS); renderMissed(); });
+document.getElementById('missedDays').addEventListener('change', (e)=>{ MISS.days = parseInt(e.target.value, 10); lsSet('sp_miss', MISS); renderMissed(); });
+document.getElementById('vArm').addEventListener('click', ()=>{
+  toggleArm(V.syms[V.idx]);
+  V.cartDirty = true;
+  vUpdateArmBtn();
+});
+
+const riskAcctEl = document.getElementById('riskAcct'), riskPctEl = document.getElementById('riskPct'), riskScaleEl = document.getElementById('riskScale');
+riskAcctEl.value = RISK.account; riskPctEl.value = RISK.riskPct; riskScaleEl.checked = !!RISK.scaleRegime;
+function onRiskChange(){
+  const a = parseFloat(riskAcctEl.value), p = parseFloat(riskPctEl.value);
+  if(a > 0) RISK.account = a;
+  if(p > 0 && p <= 5) RISK.riskPct = p;
+  RISK.scaleRegime = riskScaleEl.checked;
+  saveRisk();
+  if(activeView === 'base' || activeView === 'reclaim' || activeView === 'armed') rerenderActiveView();
+}
+riskAcctEl.addEventListener('change', onRiskChange);
+riskPctEl.addEventListener('change', onRiskChange);
+riskScaleEl.addEventListener('change', onRiskChange);
+
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && lsGet('sp_armed_auto', 0) > 0) pollArmed(false); });
+saveArmed();
+setAutoCheck(lsGet('sp_armed_auto', 0) || 0);
+
 document.getElementById('nearEmaThreshold').addEventListener('change', (e) => {
   nearEmaThresholdPct = parseFloat(e.target.value);
   if(activeView === 'nearema') renderNearEmaGrid();
@@ -4001,7 +4781,7 @@ document.getElementById('scannerToggle').addEventListener('click', ()=>{
   if(activeView === 'table') renderTable();
   else if(activeView === 'bullish') renderBullishScanner();
   else if(activeView === 'nearema') renderNearEmaGrid();
-  else if(activeView === 'base') renderBaseScan();
+  else if(activeView === 'base') renderBaseScan(); else if(activeView === 'reclaim') renderReclaimScan(); else if(activeView === 'armed') renderArmed(); else if(activeView === 'missed') renderMissed();
   else renderHeatMap();
 });
 
@@ -4032,8 +4812,9 @@ async function loadAll(forceRefresh=false){
     if(activeView === 'table') renderTable();
     else if(activeView === 'bullish') renderBullishScanner();
     else if(activeView === 'nearema') renderNearEmaGrid();
-    else if(activeView === 'base') renderBaseScan();
+    else if(activeView === 'base') renderBaseScan(); else if(activeView === 'reclaim') renderReclaimScan(); else if(activeView === 'armed') renderArmed(); else if(activeView === 'missed') renderMissed();
     else renderHeatMap();
+    loadEarnings(false);
   }catch(err){
     document.getElementById('tbody').innerHTML = `<tr><td colspan="9"><div class="empty-state">Error: ${(err.message||'Failed loading data')}</div></td></tr>`;
   }finally{
