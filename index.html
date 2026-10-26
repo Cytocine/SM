@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -28,8 +28,8 @@
     --border:#1d2430;
     --border-soft:#171d27;
     --text:#e7ecf3;
-    --muted:#6b7686;
-    --muted-2:#4a5361;
+    --muted:#9aa6b8;
+    --muted-2:#7a8699;
     --accent:#2dd4bf;
     --accent-dim:#164e47;
     --amber:#f0a83c;
@@ -122,7 +122,7 @@
 
   .cart-badge{
     display:inline-flex; align-items:center; justify-content:center;
-    background:var(--accent); color:#04211c; font-size:10px; font-weight:700;
+    background:var(--accent); color:#04211c; font-size:11px; font-weight:700;
     width:15px; height:15px; border-radius:50%; margin-left:2px;
   }
 
@@ -151,7 +151,7 @@
   }
   thead th:first-child{text-align:left; position:sticky; left:0; z-index:3;}
   thead th:hover{color:var(--text);}
-  thead th .arrow, thead th .barrow{font-size:9px; margin-left:4px; opacity:0.7;}
+  thead th .arrow, thead th .barrow{font-size:11px; margin-left:4px; opacity:0.7;}
   thead th.spark-col{cursor:default;}
   tbody tr.group-row{
     border-bottom:1px solid var(--border-soft);
@@ -167,7 +167,7 @@
   .gname-text{white-space:normal;}
   .badges{display:flex; gap:6px; margin-top:4px; padding-left:18px; flex-wrap:wrap;}
   .badge{
-    font-size:10px; font-weight:600; letter-spacing:0.2px; padding:2px 6px; border-radius:5px;
+    font-size:11px; font-weight:600; letter-spacing:0.2px; padding:2px 6px; border-radius:5px;
     font-family:'JetBrains Mono',monospace; white-space:nowrap;
   }
   .badge.bullish{background:var(--up-dim); color:var(--up); border:1px solid rgba(52,211,153,0.35);}
@@ -200,7 +200,7 @@
   tr.buy4h-row{cursor:pointer; transition:background .12s;}
   tr.buy4h-row:hover td{background:var(--panel-2);}
   tr.buy4h-row.selected td{background:var(--accent-dim);}
-  .chev{color:var(--muted-2); font-size:10px; transition:transform .15s; display:inline-block; width:10px;}
+  .chev{color:var(--muted-2); font-size:11px; transition:transform .15s; display:inline-block; width:10px;}
   .group-row.expanded .chev{transform:rotate(90deg); color:var(--accent);}
   .pct{font-family:'JetBrains Mono',monospace; font-weight:500;}
   .pct.up{color:var(--up);}
@@ -258,10 +258,10 @@
   }
   .hm-tile:hover{transform:scale(1.04); filter:brightness(1.15);}
   .hm-tile .t-sym{font-size:11px; color:#fff; display:block;}
-  .hm-tile .t-pct{font-size:9.5px; opacity:0.85;}
+  .hm-tile .t-pct{font-size:11px; opacity:0.85;}
   .hm-tile.hit{box-shadow:0 0 0 1.5px var(--accent);}
   .hm-tile.in-cart::after{
-    content:'★'; position:absolute; top:2px; right:3px; font-size:8px; color:var(--amber);
+    content:'★'; position:absolute; top:2px; right:3px; font-size:11px; color:var(--amber);
   }
 
   /* Supertrend Badges on Heatmap Tiles */
@@ -303,7 +303,7 @@
   /* 4H Buy Scan progress bar */
   .progress-wrap{height:3px; background:var(--panel-2); overflow:hidden; border-radius:2px; margin-bottom:12px;}
   .progress-bar{height:100%; width:0%; background:var(--up); transition:width .2s;}
-  .fresh-tag{font-size:10.5px; font-weight:700; font-family:'JetBrains Mono',monospace; color:var(--up);}
+  .fresh-tag{font-size:11px; font-weight:700; font-family:'JetBrains Mono',monospace; color:var(--up);}
   .multi-chart-grid{
     display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr));
     gap:14px;
@@ -314,10 +314,10 @@
   }
   .mini-chart-head{display:flex; align-items:center; justify-content:space-between; gap:8px;}
   .mini-chart-sym{font-weight:700; font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--text);}
-  .mini-chart-sector{font-size:10px; color:var(--muted);}
+  .mini-chart-sector{font-size:11px; color:var(--muted);}
   .mini-chart-box{height:170px;}
   .mini-chart-box.loading{
-    display:flex; align-items:center; justify-content:center; color:var(--muted-2); font-size:10.5px;
+    display:flex; align-items:center; justify-content:center; color:var(--muted-2); font-size:11px;
   }
 
   /* Chart Row */
@@ -334,10 +334,10 @@
   .dual-chart-grid{display:flex; gap:16px; flex-wrap:wrap;}
   .chart-tf-block{flex:1 1 380px; min-width:280px;}
   .chart-tf-label-row{display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:6px; margin-bottom:6px;}
-  .chart-tf-label{font-size:10.5px; font-weight:700; letter-spacing:0.6px; color:var(--muted); text-transform:uppercase;}
+  .chart-tf-label{font-size:11px; font-weight:700; letter-spacing:0.6px; color:var(--muted); text-transform:uppercase;}
   .chart-tf-stats{display:flex; gap:6px; flex-wrap:wrap;}
   .stat-pill{
-    font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:600;
+    font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:600;
     padding:2px 7px; border-radius:5px; background:var(--panel-2);
     border:1px solid var(--border); white-space:nowrap; color:var(--muted);
   }
@@ -443,7 +443,7 @@
 
     /* Table */
     table{ min-width:640px; }
-    thead th{ padding:8px 10px; font-size:10px; }
+    thead th{ padding:8px 10px; font-size:11px; }
     td{ padding:8px 10px; font-size:12px; }
     tr.sub-row td{ padding:6px 10px 6px 22px; }
 
@@ -510,14 +510,14 @@
   .setup-card .mini-chart-head{align-items:flex-start;}
   .note{font-size:11.5px; color:var(--muted); line-height:1.5;}
   .setup-card:hover{border-color:var(--border-soft);}
-  .setup-meta{font-size:10.5px; color:var(--muted); display:flex; gap:6px; flex-wrap:wrap; align-items:center;}
+  .setup-meta{font-size:11px; color:var(--muted); display:flex; gap:6px; flex-wrap:wrap; align-items:center;}
   .setup-meta .dot{color:var(--muted-2);}
-  .h1pill{font-size:10px; font-weight:700; color:var(--muted);}
-  .arm-btn{font-family:inherit; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-2); color:var(--muted); cursor:pointer;}
+  .h1pill{font-size:11px; font-weight:700; color:var(--muted);}
+  .arm-btn{font-family:inherit; font-size:11px; font-weight:700; padding:2px 8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-2); color:var(--muted); cursor:pointer;}
   .arm-btn:hover{color:var(--text); border-color:var(--accent);}
   .arm-btn.active{background:var(--up-dim); border-color:var(--up); color:var(--up);}
   .sel-sm{background:var(--panel-2); color:var(--text); border:1px solid var(--border); border-radius:6px; padding:3px 6px; font-family:inherit; font-size:11px;}
-  .tab-badge{display:inline-block; min-width:16px; padding:0 5px; margin-left:4px; border-radius:8px; background:var(--accent); color:#04201d; font-size:10px; font-weight:800; text-align:center;}
+  .tab-badge{display:inline-block; min-width:16px; padding:0 5px; margin-left:4px; border-radius:8px; background:var(--accent); color:#04201d; font-size:11px; font-weight:800; text-align:center;}
   .toast-host{position:fixed; right:14px; bottom:14px; z-index:300; display:flex; flex-direction:column; gap:8px; max-width:min(420px, calc(100vw - 28px));}
   .toast{background:var(--panel); border:1px solid var(--border-soft); border-left:3px solid var(--accent); color:var(--text); border-radius:8px; padding:10px 12px; font-size:12px; box-shadow:0 8px 24px rgba(0,0,0,.45); cursor:pointer;}
   .toast.sticky{border-left-color:var(--amber);}
@@ -564,6 +564,20 @@
     .v-select{font-size:16px;}
     .v-hint{display:none;}
   }
+
+  /* ---- a11y + status additions ---- */
+  :focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+  tr.group-row:focus-visible{outline-offset:-2px;}
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{animation:none !important; transition:none !important; scroll-behavior:auto !important;}
+  }
+  .st-badge{font-size:11px; font-weight:700; padding:2px 7px; border-radius:6px; border:1px solid var(--border); white-space:nowrap;}
+  .st-leading{color:var(--up); border-color:var(--up); background:var(--up-dim);}
+  .st-improving{color:var(--accent); border-color:var(--accent); background:var(--accent-dim);}
+  .st-weakening{color:var(--amber); border-color:var(--amber);}
+  .st-lagging{color:var(--down); border-color:var(--down); background:var(--down-dim);}
+  .why-line{font-size:11.5px; color:var(--muted); padding:0 12px 6px; line-height:1.4;}
+  .grade{font-weight:700; margin-left:3px;}
 </style>
 </head>
 <body>
@@ -993,9 +1007,9 @@
 (function(){
 
 const TICKER_SECTOR = {
-NVDA:'Technology',AMD:'Technology',AVGO:'Technology',MU:'Technology',INTC:'Technology',QCOM:'Technology',TXN:'Technology',LRCX:'Technology',AMAT:'Technology',KLAC:'Technology',TSM:'Technology',ASML:'Technology',
-MSFT:'Technology',ORCL:'Technology',CRM:'Technology',ADBE:'Technology',NOW:'Technology',INTU:'Technology',PLTR:'Technology',SNPS:'Technology',CDNS:'Technology',
-AAPL:'Technology',DELL:'Technology',HPQ:'Technology',HPE:'Technology',IBM:'Technology',ACN:'Technology',EPAM:'Technology',
+NVDA:'Semiconductors',AMD:'Semiconductors',AVGO:'Semiconductors',MU:'Semiconductors',INTC:'Semiconductors',QCOM:'Semiconductors',TXN:'Semiconductors',LRCX:'Semiconductors',AMAT:'Semiconductors',KLAC:'Semiconductors',TSM:'Semiconductors',ASML:'Semiconductors',
+MSFT:'Software',ORCL:'Software',CRM:'Software',ADBE:'Software',NOW:'Software',INTU:'Software',PLTR:'Software',SNPS:'Software',CDNS:'Software',
+AAPL:'Hardware & IT Services',DELL:'Hardware & IT Services',HPQ:'Hardware & IT Services',HPE:'Hardware & IT Services',IBM:'Hardware & IT Services',ACN:'Hardware & IT Services',EPAM:'Hardware & IT Services',
 FIS:'Financials',FISV:'Financials',
 PANW:'Cybersecurity',CRWD:'Cybersecurity',ZS:'Cybersecurity',FTNT:'Cybersecurity',OKTA:'Cybersecurity',S:'Cybersecurity',
 COIN:'Crypto',HOOD:'Crypto',MSTR:'Crypto',MARA:'Crypto',RIOT:'Crypto',CLSK:'Crypto',BMNR:'Crypto',
@@ -1044,7 +1058,7 @@ let activeView = 'table';
 let selectedSymbol = null;
 let hmMetric = 'm1';
 let nearEmaThresholdPct = 2;
-let watchlistCart = new Set(JSON.parse(localStorage.getItem('sp_watchlist_cart') || '[]'));
+let watchlistCart = new Set((()=>{ try{ const v = JSON.parse(localStorage.getItem('sp_watchlist_cart') || '[]'); return Array.isArray(v) ? v : []; }catch(e){ return []; } })());
 let isPlayingSectors = false;
 let sectorPlayTimer = null;
 let isPlayingStocks = false;
@@ -1750,6 +1764,16 @@ function renderBuy4hScan(){
   });
 }
 
+function median(arr){
+  const a = arr.filter(x => x != null && !Number.isNaN(x)).sort((x,y)=>x-y);
+  if(!a.length) return null;
+  const m = a.length >> 1; return a.length % 2 ? a[m] : (a[m-1] + a[m]) / 2;
+}
+const STATUS_ICON = { Leading:'●', Improving:'◐', Weakening:'◑', Lagging:'○' };
+function sectorStatusBadge(d){
+  if(!d.status) return '';
+  return `<span class="st-badge st-${d.status.toLowerCase()}" title="${d.status}: 1W/1M strength vs SPY. ${Math.round(d.breadth)}% of names above EMA34">${STATUS_ICON[d.status]} ${d.status} · ${Math.round(d.breadth)}% breadth</span>`;
+}
 function avg(arr){
   const v = arr.filter(x=>x!==null && x!==undefined && !isNaN(x));
   return v.length ? v.reduce((a,b)=>a+b,0) / v.length : null;
@@ -1899,6 +1923,9 @@ function computeAll(){
     }
   }
 
+  const rsList = ALL_SYMBOLS.filter(s => TICKER_SECTOR[s] !== 'ETF/Index' && symReturns[s] && symReturns[s].rsM1 != null).map(s => ({ s, v: symReturns[s].rsM1 + (symReturns[s].m3 != null && spyRet && spyRet.m3 != null ? (symReturns[s].m3 - spyRet.m3) * 0.5 : 0) })).sort((a,b)=>a.v-b.v);
+  rsList.forEach((o, i) => { symReturns[o.s].rsRank = rsList.length > 1 ? Math.round(i / (rsList.length - 1) * 100) : 50; });
+
   for(const [gname, syms] of Object.entries(GROUPS)){
     const validSyms = syms.filter(s => symReturns[s]);
     const tickers = {};
@@ -1912,7 +1939,8 @@ function computeAll(){
 
     const w1Avg = avg(validSyms.map(s=>symReturns[s].w1));
     const m1Avg = avg(validSyms.map(s=>symReturns[s].m1));
-    const isBullishSector = detectBullishTurn(fullSpark) || (w1Avg != null && w1Avg > 1 && m1Avg != null && m1Avg > 0);
+    const breadth = validSyms.length ? validSyms.filter(s => symReturns[s].pctFromEma34 != null && symReturns[s].pctFromEma34 > 0).length / validSyms.length * 100 : 0;
+    const isBullishSector = detectBullishTurn(fullSpark) || (w1Avg != null && w1Avg > 1 && m1Avg != null && m1Avg > 0 && breadth >= 50);
     const turnDaysAgo = daysSinceCross(fullSpark);
     const justTurned = turnDaysAgo != null && turnDaysAgo <= NEW_TURN_WINDOW;
 
@@ -1932,6 +1960,8 @@ function computeAll(){
       spark7,
       sparkEma7,
       fullSpark,
+      breadth,
+      m1Med: median(validSyms.map(s=>symReturns[s].m1)),
       turningBullish: isBullishSector,
       turnDaysAgo,
       justTurned,
@@ -1943,9 +1973,10 @@ function computeAll(){
     if(spyRet && spyRet.w1 != null && spyRet.m1 != null && d.w1 != null && d.m1 != null){
       d.rsW1 = d.w1 - spyRet.w1;
       d.rsM1 = d.m1 - spyRet.m1;
-      d.sectorStrong = d.turningBullish && d.rsW1 > 0 && d.rsM1 > 0;
+      d.sectorStrong = d.turningBullish && d.rsW1 > 0 && d.rsM1 > 0 && d.breadth >= 60 && (d.m1Med == null || d.m1Med > 0);
+      d.status = d.rsM1 > 0 ? (d.rsW1 > 0 ? 'Leading' : 'Weakening') : (d.rsW1 > 0 ? 'Improving' : 'Lagging');
     } else {
-      d.rsW1 = null; d.rsM1 = null; d.sectorStrong = false;
+      d.rsW1 = null; d.rsM1 = null; d.sectorStrong = false; d.status = null;
     }
   }
 
@@ -2227,7 +2258,7 @@ function swingScoreCell(item){
   if(item.rsW1 != null) tags += `<span class="badge ${item.rsW1 > 0 ? 'bullish' : ''}" ${item.rsW1 <= 0 ? 'style="color:var(--muted); border-color:var(--border-soft);"' : ''}>RS ${item.rsW1 > 0 ? '+' : ''}${item.rsW1.toFixed(1)}%</span>`;
   if(item.overExtended) tags += '<span class="badge" style="color:var(--amber); border-color:rgba(240,168,60,0.35);">Extended</span>';
   const stopLine = (item.atrStop != null && !item.illiquid)
-    ? `<div class="mono" style="font-size:10px; color:var(--muted); margin-top:3px;">Stop ~$${item.atrStop.toFixed(2)} (${item.atrStopPct != null ? item.atrStopPct.toFixed(1) : '—'}%, ${item.stopIsStructural ? 'swing low' : '1.5x ATR'})</div>`
+    ? `<div class="mono" style="font-size:11px; color:var(--muted); margin-top:3px;">Stop ~$${item.atrStop.toFixed(2)} (${item.atrStopPct != null ? item.atrStopPct.toFixed(1) : '—'}%, ${item.stopIsStructural ? 'swing low' : '1.5x ATR'})</div>`
     : '';
   return `<div>
     <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
@@ -2530,7 +2561,7 @@ function renderTable(){
           ? `<span class="badge bullish new-turn">🆕 Just Turned Bullish · ${d.turnDaysAgo}d ago</span>`
           : `<span class="badge bullish">▲ Bullish Sector${d.turnDaysAgo!=null ? ` · turned ${d.turnDaysAgo}d ago` : ''}</span>`)
       : '';
-    const badges = `${bullishBadge} ${hitsCount > 0 ? `<span class="badge turn-hit">★ ${hitsCount} Turn Hit${hitsCount>1?'s':''}</span>` : ''}${leader ? `<span class="badge leader">Leader: ${leader.sym} ${leader.val>0?'+':''}${leader.val.toFixed(1)}%</span>` : ''}`;
+    const badges = `${sectorStatusBadge(d)} ${bullishBadge} ${hitsCount > 0 ? `<span class="badge turn-hit">★ ${hitsCount} Turn Hit${hitsCount>1?'s':''}</span>` : ''}${leader ? `<span class="badge leader">Leader: ${leader.sym} ${leader.val>0?'+':''}${leader.val.toFixed(1)}%</span>` : ''}`;
 
     html += `<tr class="group-row${isOpen?' expanded':''}" data-group="${name}">
       <td><div class="group-name"><span class="chev">▸</span><span class="gname-text">${name}</span></div><div class="badges">${badges}</div></td>
@@ -2864,7 +2895,7 @@ function renderHeatMap(){
 
     html += `<div class="hm-card">
       <div class="hm-head">
-        <div class="hm-title">${name} ${d.turningBullish ? '<span class="badge bullish">Bullish</span>' : ''} <span style="color:var(--muted); font-weight:400; font-size:10px;">top ${sortedTickers.length} of ${Object.keys(d.tickers).length}</span></div>
+        <div class="hm-title">${name} ${d.turningBullish ? '<span class="badge bullish">Bullish</span>' : ''} <span style="color:var(--muted); font-weight:400; font-size:11px;">top ${sortedTickers.length} of ${Object.keys(d.tickers).length}</span></div>
         <div>${hmMetric === 'swingScore' ? `<span class="mono" style="font-weight:700;">${Math.round(d.swingScore||0)}</span>` : pctSpan(d[hmMetric])}</div>
       </div>
       <div class="hm-tiles">${tiles}</div>
@@ -3193,7 +3224,8 @@ function earnDays(sym){
 }
 function earnBadge(sym){
   const d = earnDays(sym);
-  if(d == null || d > 5) return '';
+  if(d == null) return EARN.map && Object.keys(EARN.map).length ? '' : `<span class="badge" title="No earnings data loaded — add an FMP key to see earnings risk">ER ?</span>`;
+  if(d > 5) return '';
   return `<span class="badge chase-high" title="Earnings in ${d} day${d===1?'':'s'} — a gap can jump your stop">⚠ ER ${d === 0 ? 'today' : d + 'd'}</span>`;
 }
 async function loadEarnings(force){
@@ -3233,7 +3265,7 @@ function scoreSetup(item){
   const d = groupData[sector] || {};
   const p = {};
   p.sector = d.sectorStrong ? 20 : (d.turningBullish ? 8 : 0);
-  p.rs = r.rsM1 == null ? 0 : Math.round(clamp01(r.rsM1 / 15) * 20);
+  p.rs = r.rsRank != null ? Math.round(r.rsRank / 100 * 20) : (r.rsM1 == null ? 0 : Math.round(clamp01(r.rsM1 / 15) * 20));
   if(kind === 'base'){
     p.shape = Math.round(clamp01(1 - b.rangeAtr / BASE_MAX_ATR) * 15);
     if(b.status === 'Breakout') p.volume = (b.relVol != null && b.relVol >= 1.5) ? 15 : ((b.relVol != null && b.relVol >= 1) ? 8 : 0);
@@ -3248,7 +3280,19 @@ function scoreSetup(item){
   p.risk = rk <= 3 ? 10 : (rk <= 5 ? 6 : (rk <= 8 ? 2 : 0));
   const ed = earnDays(sym);
   p.earnings = (ed != null && ed <= 5) ? -25 : 0;
-  p.regime = MARKET.state === 'off' ? -10 : 0;
+  p.regime = MARKET.state === 'off' ? -25 : 0;
+  const bb = barsBySymbol[sym];
+  p.reward = 0; p.chase = 0;
+  if(bb && bb.length > 30 && b.stop != null){
+    const ent = item.entry != null ? item.entry : r.lastPrice;
+    const hi = Math.max(...bb.slice(-121, -1).map(x=>x.h));
+    const risk = ent - b.stop;
+    if(risk > 0){
+      if(ent >= hi) p.reward = 5;
+      else { const rr = (hi - ent) / risk; p.reward = rr >= 2 ? 5 : (rr < 1 ? -10 : 0); }
+    }
+    if(kind === 'base' && b.status === 'Breakout' && b.baseHigh && (r.lastPrice - b.baseHigh) / b.baseHigh * 100 > 5) p.chase = -10;
+  }
   p.extended = (kind === 'base' && b.extPct > 10) ? -5 : 0;
   const total = Math.max(0, Math.min(100, Object.values(p).reduce((a,x)=>a+x, 0)));
   return { score: Math.round(total), parts: p };
@@ -3256,7 +3300,8 @@ function scoreSetup(item){
 function scorePill(item){
   const s = item.score, cls = s >= 70 ? 's-hi' : (s >= 50 ? 's-mid' : 's-lo');
   const tip = Object.entries(item.parts).map(([k,v])=>`${k} ${v>0?'+':''}${v}`).join(' · ');
-  return `<span class="score-pill ${cls}" title="${tip}">${s}</span>`;
+  const g = s >= 80 ? 'A' : (s >= 70 ? 'B' : (s >= 50 ? 'C' : 'D'));
+  return `<span class="score-pill ${cls}" title="${tip}" data-tip="Score ${s} (grade ${g}): ${tip}" aria-label="Score ${s}, grade ${g}">${s}<span class="grade">${g}</span></span>`;
 }
 
 // ---------- setup lookup + items ----------
@@ -3435,6 +3480,15 @@ function wireSetupClicks(root, list){
   };
 }
 
+function whyText(item){
+  const d = groupData[item.sector] || {}, r = item.r, b = item.b;
+  const bits = [];
+  if(d.status) bits.push(`${item.sector} ${d.status.toLowerCase()}`);
+  if(r.rsM1 != null) bits.push(`${r.rsM1 >= 0 ? '+' : ''}${r.rsM1.toFixed(1)}% vs SPY${r.rsRank != null ? ' (RS rank ' + r.rsRank + ')' : ''}`);
+  bits.push(item.kind === 'base' ? (b.status === 'Breakout' ? 'base breakout' : 'tight base') : `reclaimed EMA34 ${b.daysAgo}d ago`);
+  bits.push(`stop ${item.riskPct.toFixed(1)}% away`);
+  return bits.join(' · ');
+}
 function cardHTML(item, i){
   const { sym, sector, r, b, kind } = item;
   const parts = [];
@@ -3451,6 +3505,7 @@ function cardHTML(item, i){
       </div>
     </div>
     <div class="setup-meta mono">${parts.join('<span class="dot">·</span>')} ${earnBadge(sym)} ${h1Pill(sym)}</div>
+    <div class="why-line">${whyText(item)}</div>
     <div class="mini-chart-box loading" style="height:190px;" data-sym="${sym}" data-kind="${kind}">loading…</div>
   </div>`;
 }
@@ -3586,10 +3641,12 @@ function itemFor(sym, kind){
 
 // ---------- Review Top 10 ----------
 function reviewTop10(){
-  const all = [...setupItems('base', true), ...setupItems('reclaim', true)].sort((a, c)=> c.score - a.score);
+  const all = [...setupItems('base', true), ...setupItems('reclaim', true)]
+    .filter(it => it.strong && it.score >= 70 && MARKET.state !== 'off' && !(earnDays(it.sym) != null && earnDays(it.sym) <= 5))
+    .sort((a, c)=> c.score - a.score);
   const seen = new Set(), top = [];
   for(const it of all){ if(seen.has(it.sym)) continue; seen.add(it.sym); top.push(it); if(top.length === 10) break; }
-  if(!top.length){ toast('No setups to review yet — load data first.'); return; }
+  if(!top.length){ toast('No shortlist today: needs strong sector, score 70+, market not risk-off, no earnings within 5 days.'); return; }
   openViewer(top.map(x=>x.sym), 0, top.map(x=>x.kind));
 }
 
@@ -4846,6 +4903,29 @@ async function loadAll(forceRefresh=false){
     syncBtn.classList.remove('spinning');
   }
 }
+
+// ----- accessibility pass -----
+(function a11y(){
+  function fix(root){
+    root.querySelectorAll('[title]:not([aria-label])').forEach(el => {
+      if(!el.textContent.trim() || el.matches('button,.icon-btn')) el.setAttribute('aria-label', el.getAttribute('title'));
+    });
+    root.querySelectorAll('button:not([aria-label])').forEach(el => { if(!el.textContent.trim() && el.title) el.setAttribute('aria-label', el.title); });
+    root.querySelectorAll('tr.group-row:not([tabindex])').forEach(tr => { tr.tabIndex = 0; tr.setAttribute('role', 'button'); tr.setAttribute('aria-expanded', tr.classList.contains('expanded') ? 'true' : 'false'); });
+  }
+  document.addEventListener('keydown', e => {
+    const tr = e.target.closest && e.target.closest('tr.group-row');
+    if(tr && e.target === tr && (e.key === 'Enter' || e.key === ' ')){ e.preventDefault(); tr.click(); }
+  });
+  document.addEventListener('click', e => {
+    const p = e.target.closest && e.target.closest('.score-pill[data-tip]');
+    if(p) toast(p.getAttribute('data-tip'));
+  });
+  let pending = false;
+  new MutationObserver(() => { if(pending) return; pending = true; requestAnimationFrame(() => { pending = false; fix(document); }); })
+    .observe(document.body, { childList:true, subtree:true });
+  fix(document);
+})();
 
 loadAll();
 
