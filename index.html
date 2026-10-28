@@ -637,6 +637,7 @@
       <button class="pill-toggle" id="exportCartBtn" title="Export watchlisted symbols (symbol only)">
         🛒 Cart <span class="cart-badge" id="cartCount">0</span>
       </button>
+      <button class="pill-toggle" id="manageCartBtn" title="View the symbols in your cart and remove any of them">✎ Edit Cart</button>
       <button class="pill-toggle ai-btn" id="analyzeCartBtn" title="Analyze Cart stocks and generate trade plans with Gemini / ChatGPT">
         🤖 AI Trade Plan
       </button>
@@ -5371,7 +5372,11 @@ document.getElementById('chartsSrc').addEventListener('change', e => { chartsSou
 document.getElementById('chartsCols').addEventListener('change', e => { chartsCols = parseInt(e.target.value, 10) || 3; lsSet('sp_charts_cols', chartsCols); renderChartsTab(); });
 document.getElementById('chartsBars').addEventListener('change', e => { chartsBars = parseInt(e.target.value, 10); lsSet('sp_charts_bars', chartsBars); renderChartsTab(); });
 document.getElementById('chartsGrid').addEventListener('click', e => {
-  if(handleCartClick(e)) return;
+  const star = e.target.closest('.cart-btn');
+  if(handleCartClick(e)){
+    if(chartsSource === 'cart' && star){ const x = star.getAttribute('data-cart-sym'); if(!watchlistCart.has(x)){ renderChartsTab(); toast('Removed ' + x + ' from your cart.'); } }
+    return;
+  }
   const b = e.target.closest('.ch-open');
   if(b) openViewer(chartsList, parseInt(b.getAttribute('data-i'), 10), null);
 });
@@ -5451,6 +5456,7 @@ document.getElementById('newTurnToggle').addEventListener('click', ()=>{
 
 document.getElementById('playPauseBtn').addEventListener('click', togglePlaySectors);
 document.getElementById('exportCartBtn').addEventListener('click', exportCartSymbolsOnly);
+document.getElementById('manageCartBtn').addEventListener('click', spShowCart);
 document.getElementById('exportHitsBtn').addEventListener('click', exportHitsSymbolsOnly);
 document.getElementById('exportBullishBtn').addEventListener('click', exportTop10BullishStocksOnly);
 
@@ -5610,6 +5616,43 @@ function spShowStats(){
   ov.querySelector('#logClose').onclick = () => ov.remove();
   ov.querySelector('#logClear').onclick = () => { if(confirm('Delete all logged signals?')){ lsSet(SPLOG_KEY, []); ov.remove(); } };
   ov.addEventListener('click', e => { if(e.target === ov) ov.remove(); });
+}
+function spShowCart(){
+  const old = document.getElementById('cartModalOverlay'); if(old) old.remove();
+  const ov = document.createElement('div');
+  ov.className = 'modal-overlay open'; ov.id = 'cartModalOverlay';
+  let dirty = false;
+  const close = () => { ov.remove(); if(dirty && Object.keys(groupData).length) rerenderActiveView(); };
+  const draw = () => {
+    const syms = [...watchlistCart].sort();
+    ov.innerHTML = `<div class="modal modal-lg" style="max-width:520px;">
+      <h3 style="margin:0 0 8px;">Watchlist Cart · ${syms.length}</h3>
+      <div style="overflow-y:auto; max-height:55vh;">${syms.length ? syms.map(x => `<div style="display:flex; justify-content:space-between; align-items:center; padding:6px 2px; border-bottom:1px solid var(--border-soft);">
+        <span><b class="mono">${x}</b> <span style="color:var(--muted); font-size:12px;">${TICKER_SECTOR[x] || ''}</span></span>
+        <button class="chart-nav-btn" data-rm="${x}" title="Remove ${x} from cart" aria-label="Remove ${x} from cart">✕</button></div>`).join('') : '<p>Your cart is empty.</p>'}</div>
+      <div class="modal-actions" style="margin-top:14px;"><button class="pill-toggle" id="cartClearAll" ${syms.length ? '' : 'disabled'}>Clear all</button><button class="pill-toggle" id="cartClose">Close</button></div></div>`;
+  };
+  ov.addEventListener('click', e => {
+    if(e.target === ov || e.target.closest('#cartClose')){ close(); return; }
+    const rm = e.target.closest('[data-rm]');
+    if(rm){
+      const x = rm.getAttribute('data-rm');
+      watchlistCart.delete(x); saveCart(); dirty = true;
+      document.querySelectorAll(`.cart-btn[data-cart-sym="${x}"]`).forEach(b => { b.textContent = '☆'; b.classList.remove('active'); });
+      if(activeView === 'charts' && chartsSource === 'cart') renderChartsTab();
+      draw(); return;
+    }
+    if(e.target.closest('#cartClearAll')){
+      if(confirm('Remove all ' + watchlistCart.size + ' symbols from your cart?')){
+        const gone = [...watchlistCart]; watchlistCart.clear(); saveCart(); dirty = true;
+        gone.forEach(x => document.querySelectorAll(`.cart-btn[data-cart-sym="${x}"]`).forEach(b => { b.textContent = '☆'; b.classList.remove('active'); }));
+        if(activeView === 'charts' && chartsSource === 'cart') renderChartsTab();
+        draw();
+      }
+    }
+  });
+  draw();
+  document.body.appendChild(ov);
 }
 function spSectorWarn(sym){
   const sec = TICKER_SECTOR[sym]; if(!sec) return;
@@ -5773,7 +5816,7 @@ function spMiniOverlay(el, chart, series, bars, startIdx){
     }
     const open = document.querySelector('.modal-overlay.open');
     if(open){
-      if(e.key === 'Escape'){ open.id === 'logModalOverlay' ? open.remove() : open.classList.remove('open'); return; }
+      if(e.key === 'Escape'){ (open.id === 'logModalOverlay' || open.id === 'cartModalOverlay') ? open.remove() : open.classList.remove('open'); return; }
       if(e.key === 'Tab'){
         const f = [...open.querySelectorAll('button,input,select,textarea,a[href],[tabindex]:not([tabindex="-1"])')].filter(x => !x.disabled && x.offsetParent !== null);
         if(f.length){
